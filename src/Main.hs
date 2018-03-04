@@ -59,34 +59,32 @@ pattern KeyPressed a <- (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Pressed 
 pattern KeyReleased a <- (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Released _ (SDL.Keysym _ a _)))
 
 
--- @TODO: This processed input and modifies velocities of things in our world accordingly
+-- This processed input and modifies velocities of things in our world accordingly
 -- and then returns the new world
--- processInput :: World -> SDL.EventPayload -> World
--- processInput world@(Guy _ curVel) (KeyPressed SDL.KeycodeUp) =
---     world { velocity = curVel * V2 1 0 + jumpVelocity}
--- processInput world@(Guy _ curVel) (KeyPressed SDL.KeycodeLeft) =
---     world { velocity = negate walkingSpeed + curVel  }
--- processInput world@(Guy _ curVel) (KeyPressed SDL.KeycodeRight) =
---     world { velocity = walkingSpeed + curVel  }
---
--- processInput world@(Guy _ curVel) (KeyReleased SDL.KeycodeUp) =
---     world { velocity = curVel - jumpVelocity }
--- processInput world@(Guy _ curVel) (KeyReleased SDL.KeycodeLeft) =
---     world { velocity = curVel - negate walkingSpeed  }
--- processInput world@(Guy _ curVel) (KeyReleased SDL.KeycodeRight) =
---     world { velocity = curVel - walkingSpeed  }
--- processInput w _ = w
+processInput :: GameState -> SDL.EventPayload -> GameState
+processInput state@(State oldGuy@(Guy _ curVel) _) (KeyPressed SDL.KeycodeUp) =
+  state { entities = oldGuy {velocity = curVel * V2 1 0 + jumpVelocity}}
+processInput state@(State oldGuy@(Guy _ curVel) _) (KeyPressed SDL.KeycodeLeft) =
+  state { entities = oldGuy {velocity = negate walkingSpeed + curVel}}
+processInput state@(State oldGuy@(Guy _ curVel) _) (KeyPressed SDL.KeycodeRight) =
+  state { entities = oldGuy {velocity = walkingSpeed + curVel}}
 
 
--- @TODO: This function takes cares of applying things like our entities' velocities
--- to their positions, as well as
--- updateWorld :: CDouble -> World -> World
--- updateWorld delta (Guy (P pos) vel) =
---     let (V2 newPosX newPosY) = pos + (gravity + vel) * V2 delta delta
---         -- Ensure that we stay within bounds
---         fixedX = max 0 $ min newPosX (fromIntegral screenWidth - 50)
---         fixedY = max 0 $ min (fromIntegral screenHeight - 100) newPosY
---     in Guy (P $ V2 fixedX fixedY) vel
+processInput state@(State oldGuy@(Guy _ curVel) _) (KeyReleased SDL.KeycodeUp) =
+  state { entities = oldGuy {velocity = curVel - jumpVelocity}}
+processInput state@(State oldGuy@(Guy _ curVel) _) (KeyReleased SDL.KeycodeLeft) =
+  state { entities = oldGuy {velocity = curVel - negate walkingSpeed}}
+processInput state@(State oldGuy@(Guy _ curVel) _) (KeyReleased SDL.KeycodeRight) =
+  state { entities = oldGuy {velocity = curVel - walkingSpeed}}
+
+processInput s _ = s
+
+updateWorld :: CDouble -> GameState -> GameState
+updateWorld delta state@(State (Guy (P pos) vel) _) = 
+  let (V2 newPosX newPosY) =  pos + (gravity + vel) * V2 delta delta
+      fixedX = max 0 $ min newPosX (fromIntegral screenWidth - 50)
+      fixedY = max 0 $ min (fromIntegral screenHeight - 100) newPosY
+   in state {entities = Guy (P $ V2 fixedX fixedY) vel }
 
 
 main :: IO ()
@@ -131,10 +129,9 @@ main = do
             payloads = map SDL.eventPayload events
             quit = SDL.QuitEvent `elem` payloads
 
-        -- @TODO: Update functions
-        --let worldAfterInput = foldl' processInput state payloads
-        --    newWorld        = updateWorld delta worldAfterInput
-        let newState = state
+        -- Update functions
+        let worldAfterInput = foldl' processInput state payloads
+            newState        = updateWorld delta worldAfterInput
 
         SDL.clear renderer
 
