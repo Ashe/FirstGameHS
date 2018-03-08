@@ -21,4 +21,7 @@ executable FirstGameHS
   build-depends:        base >= 4.7 && < 5
                         , sdl2
                         , pretty-simple
+                        , directory
+                        , aeson
   other-modules:        Paths_FirstGameHS
+                        , Animations

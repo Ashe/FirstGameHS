@@ -11,6 +11,8 @@ import Data.List (foldl')
 import SDL.Raw.Timer as SDL hiding (delay)
 import Text.Pretty.Simple
 
+import Animations
+
 import Paths_FirstGameHS(getDataFileName)
 
 screenWidth, screenHeight :: CInt
