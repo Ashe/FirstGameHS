@@ -1,16 +1,30 @@
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- This module is responsible for loading in images as animations
 
 module Animations where
 
 import Control.Monad
+import Control.Applicative ((<$>))
+import GHC.Generics
 import Foreign.C.Types
 import System.Directory
 import Data.List
-import Data.Aeson
+import Data.Aeson 
+import qualified Data.ByteString.Lazy as B
 import SDL
 import qualified SDL
+
+-- Creation of types for JSON parsing
+data Frame =
+  Frame { rectX :: Int
+        , rectY :: Int
+        , rectW :: Int
+        , rectH :: Int
+        } deriving (Show, Generic)
+instance ToJSON Frame
+instance FromJSON Frame
 
 -- Get list of all files
 -- Filter for pairs of BMP and JSON files
@@ -37,8 +51,19 @@ getTextureFromBMP renderer bmp = do
   return texture
 
 -- Takes a file and extracts a list of rectangles
-getAnimationClips :: FilePath -> [SDL.Rectangle CInt]
-getAnimationClips json = undefined
+-- getAnimationClips :: FilePath -> IO (Either String [SDL.Rectangle Int])
+-- getAnimationClips jsonPath = do
+--  let convertToRect (Frame x y w h) = SDL.Rectangle (P $ V2 x y) (V2 x y)
+--      -- json <- (eitherDecode <$> B.readFile jsonPath) :: IO (Either String [Frame])
+--  fmap . fmap (map convertToRect) (eitherDecode <$> B.readFile jsonPath :: IO (Either String [Frame]))
+
+getAnimationClips :: FilePath -> IO (Either String [SDL.Rectangle Int])
+getAnimationClips jsonPath = do
+  let convertToRect (Frame x y w h) = SDL.Rectangle (P $ V2 x y) (V2 x y)
+  json <- (eitherDecode <$> B.readFile jsonPath) :: IO (Either String [Frame])
+  case json of
+    Left err -> return $ Left (err :: String)
+    Right list -> return $ Right $ map convertToRect list
 
 -- Takes a pair of file paths and returns an animation
 getAnimation :: (FilePath, FilePath) -> (SDL.Texture, [SDL.Rectangle CInt])

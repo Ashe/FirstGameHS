@@ -23,5 +23,6 @@ executable FirstGameHS
                         , pretty-simple
                         , directory
                         , aeson
+                        , bytestring
   other-modules:        Paths_FirstGameHS
                         , Animations
