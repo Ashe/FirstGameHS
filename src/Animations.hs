@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE TupleSections #-}
 
 -- This module is responsible for loading in images as animations
 
@@ -7,14 +8,20 @@ module Animations where
 
 import Control.Monad
 import Control.Applicative ((<$>))
+import Control.Arrow((***))
 import GHC.Generics
 import Foreign.C.Types
 import System.Directory
 import Data.List
 import Data.Aeson 
+import Data.Functor
 import qualified Data.ByteString.Lazy as B
 import SDL
 import qualified SDL
+
+-- Newtypes for files
+newtype BMPFile = BMPFile FilePath
+newtype JSONFile = JSONFile FilePath
 
 -- Creation of types for JSON parsing
 data Frame =
@@ -31,40 +38,42 @@ instance FromJSON Frame
 -- Load the BMP into a texture
 -- Load the JSON file and work out list of rectangles for each frame
 -- Do this for every file
+--
 -- Export list of tuples of textures and clips
-loadAnimationsFromDir :: FilePath -> [(SDL.Texture, [SDL.Rectangle CInt])]
-loadAnimationsFromDir path = undefined
+-- @NOTE: The only thing that DOESN'T COMPILE
+loadAnimationsFromDir :: SDL.Renderer -> FilePath -> IO [Maybe (SDL.Texture, [SDL.Rectangle Int])]
+loadAnimationsFromDir rend path =
+  --filepaths <- getFilteredFileNames path
+  --sequence (getAnimation rend <$> filepaths)
+  getFilteredFileNames path >>= traverse (getAnimation rend)
 
 -- Returns files where fst = BMP and snd = JSON
-getFilteredFileNames :: FilePath -> IO [(FilePath, FilePath)]
+getFilteredFileNames :: FilePath -> IO [(BMPFile, JSONFile)]
 getFilteredFileNames path = do
   filePath <- listDirectory path
   let sfList ext = sort $ filter (isSuffixOf ext) filePath
-  return $ zip (sfList ".bmp") (sfList ".json")
+  pure $ zip (BMPFile <$> sfList ".bmp") (JSONFile <$> sfList ".json")
 
 -- Takes file and creates a texture out of it
-getTextureFromBMP :: SDL.Renderer -> FilePath -> IO SDL.Texture
-getTextureFromBMP renderer bmp = do
+getTextureFromBMP :: SDL.Renderer -> BMPFile -> IO SDL.Texture
+getTextureFromBMP renderer (BMPFile bmp) = do
   surface <- SDL.loadBMP bmp
   texture <- SDL.createTextureFromSurface renderer surface
   SDL.freeSurface surface
-  return texture
+  pure texture
 
 -- Takes a file and extracts a list of rectangles
--- getAnimationClips :: FilePath -> IO (Either String [SDL.Rectangle Int])
--- getAnimationClips jsonPath = do
---  let convertToRect (Frame x y w h) = SDL.Rectangle (P $ V2 x y) (V2 x y)
---      -- json <- (eitherDecode <$> B.readFile jsonPath) :: IO (Either String [Frame])
---  fmap . fmap (map convertToRect) (eitherDecode <$> B.readFile jsonPath :: IO (Either String [Frame]))
-
-getAnimationClips :: FilePath -> IO (Either String [SDL.Rectangle Int])
-getAnimationClips jsonPath = do
+getAnimationClips :: JSONFile -> IO (Maybe [SDL.Rectangle Int])
+getAnimationClips (JSONFile jsonPath) = do
   let convertToRect (Frame x y w h) = SDL.Rectangle (P $ V2 x y) (V2 x y)
   json <- (eitherDecode <$> B.readFile jsonPath) :: IO (Either String [Frame])
   case json of
-    Left err -> return $ Left (err :: String)
-    Right list -> return $ Right $ map convertToRect list
+    Left err -> putStrLn err $> Nothing
+    Right list -> pure $ Just $ map convertToRect list
 
 -- Takes a pair of file paths and returns an animation
-getAnimation :: (FilePath, FilePath) -> (SDL.Texture, [SDL.Rectangle CInt])
-getAnimation pair = undefined
+getAnimation :: SDL.Renderer -> (BMPFile, JSONFile) -> IO (Maybe (SDL.Texture, [SDL.Rectangle Int]))
+getAnimation rend pair = do
+  tex <- getTextureFromBMP rend $ fst pair
+  rects <- getAnimationClips $ snd pair
+  pure $ fmap (tex,) rects :: IO (Maybe (SDL.Texture, [SDL.Rectangle Int]))
