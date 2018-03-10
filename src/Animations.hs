@@ -1,10 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TupleSections #-}
 
 -- This module is responsible for loading in images as animations
 
-module Animations where
+module Animations ( loadAnimationsFromDir,
+                    spitOutJSON )
+  where
 
 import Control.Monad
 import Control.Applicative ((<$>))
@@ -13,7 +14,10 @@ import GHC.Generics
 import Foreign.C.Types
 import System.Directory
 import Data.List
-import Data.Aeson 
+import Data.Monoid
+import Data.Aeson
+import Data.Aeson.Encode.Pretty
+import Data.ByteString.Lazy(writeFile)
 import Data.Functor
 import qualified Data.ByteString.Lazy as B
 import SDL
@@ -29,18 +33,37 @@ data Frame =
         , rectY :: Int
         , rectW :: Int
         , rectH :: Int
-        } deriving (Show, Generic)
-instance ToJSON Frame
-instance FromJSON Frame
+        } deriving (Show)
+
+instance ToJSON Frame where
+  toJSON (Frame rectX rectY rectW rectH) =
+    object  [ "rectX" .= rectX
+            , "rectY" .= rectY
+            , "rectW" .= rectW
+            , "rectH" .= rectH ]
+
+instance FromJSON Frame where
+  parseJSON (Object v) =
+    Frame <$> v .: "rectX"
+          <*> v .: "rectY"
+          <*> v .: "rectW"
+          <*> v .: "rectH"
+  parseJSON _ = mzero
+
+-- Outputs a sample of frames for animation to the path specified
+spitOutJSON :: FilePath -> IO ()
+spitOutJSON path = Data.ByteString.Lazy.writeFile path $ 
+  encodePretty' config [Frame 1 2 3 4, Frame 5 6 7 8]
+  where config = defConfig { confCompare = keyOrder 
+    ["rectX", "rectY", "rectW", "rectH"] }
 
 -- Get list of all files
 -- Filter for pairs of BMP and JSON files
 -- Load the BMP into a texture
 -- Load the JSON file and work out list of rectangles for each frame
 -- Do this for every file
---
+
 -- Export list of tuples of textures and clips
--- @NOTE: The only thing that DOESN'T COMPILE
 loadAnimationsFromDir :: SDL.Renderer -> FilePath -> IO [Maybe (SDL.Texture, [SDL.Rectangle Int])]
 loadAnimationsFromDir rend path =
   --filepaths <- getFilteredFileNames path
@@ -77,3 +100,4 @@ getAnimation rend pair = do
   tex <- getTextureFromBMP rend $ fst pair
   rects <- getAnimationClips $ snd pair
   pure $ fmap (tex,) rects :: IO (Maybe (SDL.Texture, [SDL.Rectangle Int]))
+
