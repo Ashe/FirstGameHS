@@ -4,7 +4,9 @@
 
 -- This module is responsible for loading in images as animations
 
-module Animations ( loadAnimationsFromDir,
+module Animations ( AnimationSet(),
+                    Animation(),
+                    loadAnimationsFromDir,
                     spitOutJSON )
   where
 
@@ -25,24 +27,37 @@ import SDL
 import qualified SDL
 import qualified SDL.Image
 
--- Newtypes for files
-newtype IMGFile = IMGFile FilePath
-newtype JSONFile = JSONFile FilePath
+-- Non-serializable AnimationSet
+data AnimationSet = 
+  AnimationSet  { entityName  :: String
+                , tag         :: String
+                , animations  :: [Animation]
+                } deriving (Show)
 
--- Creation of types for JSON parsing
-newtype AnimationSet = AnimationSet [Animation]
-  deriving(Show, Generic)
-instance ToJSON AnimationSet
-instance FromJSON AnimationSet
-
--- Individual animations
+-- Non-serializable Animation
 data Animation =
   Animation { name    :: String 
-            , frames  :: [Frame]
             , loop    :: Bool
-            } deriving (Show, Generic)
-instance ToJSON Animation
-instance FromJSON Animation
+            , frames  :: [SDL.Rectangle Int]
+            } deriving (Show)
+
+-- Creation of types for JSON parsing
+data AnimationSetData = 
+  AnimationSetData  { entityNameData  :: String
+                    , tagData         :: String
+                    , animationData   :: [AnimationData]
+                    } deriving(Show, Generic)
+instance ToJSON AnimationSetData
+instance FromJSON AnimationSetData
+
+-- Individual animations
+data AnimationData =
+  AnimationData { nameData   :: String 
+                , loopData   :: Bool
+                , frameData  :: [Frame]
+                } deriving (Show, Generic)
+instance ToJSON AnimationData
+instance FromJSON AnimationData
 
 -- Individual frames of an animation
 data Frame =
@@ -54,12 +69,18 @@ data Frame =
 instance ToJSON Frame
 instance FromJSON Frame
 
+-- Newtypes for files
+newtype IMGFile = IMGFile FilePath
+newtype JSONFile = JSONFile FilePath
+
 -- Outputs a sample of frames for animation to the path specified
 spitOutJSON :: FilePath -> IO ()
 spitOutJSON path = Data.ByteString.Lazy.writeFile path $ 
-  encodePretty' config (AnimationSet [Animation "basic_0" [Frame 1 2 3 4, Frame 5 6 7 8] True, Animation "basic_0" [Frame 1 2 3 4, Frame 5 6 7 8] False])
+  encodePretty' config 
+    [ AnimationSetData "example_character" "male" [AnimationData "idle_0" True [Frame 1 2 3 4, Frame 5 6 7 8], AnimationData "walk_0" True [Frame 1 2 3 4, Frame 5 6 7 8]]
+    , AnimationSetData "example_character" "female" [AnimationData "idle_0" True [Frame 1 2 3 4, Frame 5 6 7 8], AnimationData "walk_0" True [Frame 1 2 3 4, Frame 5 6 7 8]]]
   where config = defConfig { confCompare = keyOrder 
-    ["name", "loop",  "rectX", "rectY", "rectW", "rectH"] }
+    ["entityName", "tag", "animations", "name", "loop", "tag", "rectX", "rectY", "rectW", "rectH"] }
 
 -- Get list of all files
 -- Filter for pairs of IMG and JSON files
@@ -68,7 +89,7 @@ spitOutJSON path = Data.ByteString.Lazy.writeFile path $
 -- Do this for every file
 
 -- Export list of tuples of textures and clips
-loadAnimationsFromDir :: SDL.Renderer -> FilePath -> IO [Maybe (SDL.Texture, [SDL.Rectangle Int])]
+loadAnimationsFromDir :: SDL.Renderer -> FilePath -> IO [Maybe (SDL.Texture, [AnimationSet])]
 loadAnimationsFromDir rend path =
   --filepaths <- getFilteredFileNames path
   --sequence (getAnimation rend <$> filepaths)
@@ -90,18 +111,23 @@ getTextureFromImg renderer (IMGFile img) = do
   pure texture
 
 -- Takes a file and extracts a list of rectangles
-getAnimationClips :: JSONFile -> IO (Maybe [SDL.Rectangle Int])
-getAnimationClips (JSONFile jsonPath) = do
+getAnimationSets :: JSONFile -> IO (Maybe [AnimationSet])
+getAnimationSets (JSONFile jsonPath) = do
+
   let convertToRect (Frame x y w h) = SDL.Rectangle (P $ V2 x y) (V2 x y)
-  json <- (eitherDecode <$> B.readFile jsonPath) :: IO (Either String [Frame])
+      convertToAnimation (AnimationData animName loop frames) = Animation animName loop $ map convertToRect frames
+      convertToAnimationSet (AnimationSetData entName tag animations) 
+        = AnimationSet entName tag $ map convertToAnimation animations
+
+  json <- (eitherDecode <$> B.readFile jsonPath) :: IO (Either String [AnimationSetData])
   case json of
     Left err -> putStrLn err $> Nothing
-    Right list -> pure $ Just $ map convertToRect list
+    Right list -> pure $ Just $ map convertToAnimationSet list
 
 -- Takes a pair of file paths and returns an animation
-getAnimation :: SDL.Renderer -> (IMGFile, JSONFile) -> IO (Maybe (SDL.Texture, [SDL.Rectangle Int]))
+getAnimation :: SDL.Renderer -> (IMGFile, JSONFile) -> IO (Maybe (SDL.Texture, [AnimationSet]))
 getAnimation rend pair = do
   tex <- getTextureFromImg rend $ fst pair
-  rects <- getAnimationClips $ snd pair
-  pure $ fmap (tex,) rects :: IO (Maybe (SDL.Texture, [SDL.Rectangle Int]))
+  rects <- getAnimationSets $ snd pair
+  pure $ fmap (tex,) rects :: IO (Maybe (SDL.Texture, [AnimationSet]))
 

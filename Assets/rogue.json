@@ -1,0 +1,86 @@
+[
+    {
+        "entityNameData": "example_character",
+        "tagData": "male",
+        "animationData": [
+            {
+                "loopData": true,
+                "nameData": "idle_0",
+                "frameData": [
+                    {
+                        "rectX": 1,
+                        "rectY": 2,
+                        "rectW": 3,
+                        "rectH": 4
+                    },
+                    {
+                        "rectX": 5,
+                        "rectY": 6,
+                        "rectW": 7,
+                        "rectH": 8
+                    }
+                ]
+            },
+            {
+                "loopData": true,
+                "nameData": "walk_0",
+                "frameData": [
+                    {
+                        "rectX": 1,
+                        "rectY": 2,
+                        "rectW": 3,
+                        "rectH": 4
+                    },
+                    {
+                        "rectX": 5,
+                        "rectY": 6,
+                        "rectW": 7,
+                        "rectH": 8
+                    }
+                ]
+            }
+        ]
+    },
+    {
+        "entityNameData": "example_character",
+        "tagData": "female",
+        "animationData": [
+            {
+                "loopData": true,
+                "nameData": "idle_0",
+                "frameData": [
+                    {
+                        "rectX": 1,
+                        "rectY": 2,
+                        "rectW": 3,
+                        "rectH": 4
+                    },
+                    {
+                        "rectX": 5,
+                        "rectY": 6,
+                        "rectW": 7,
+                        "rectH": 8
+                    }
+                ]
+            },
+            {
+                "loopData": true,
+                "nameData": "walk_0",
+                "frameData": [
+                    {
+                        "rectX": 1,
+                        "rectY": 2,
+                        "rectW": 3,
+                        "rectH": 4
+                    },
+                    {
+                        "rectX": 5,
+                        "rectY": 6,
+                        "rectW": 7,
+                        "rectH": 8
+                    }
+                ]
+            }
+        ]
+    }
+]
