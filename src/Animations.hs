@@ -22,9 +22,10 @@ import Data.Functor
 import qualified Data.ByteString.Lazy as B
 import SDL
 import qualified SDL
+import qualified SDL.Image
 
 -- Newtypes for files
-newtype BMPFile = BMPFile FilePath
+newtype IMGFile = IMGFile FilePath
 newtype JSONFile = JSONFile FilePath
 
 -- Creation of types for JSON parsing
@@ -58,8 +59,8 @@ spitOutJSON path = Data.ByteString.Lazy.writeFile path $
     ["rectX", "rectY", "rectW", "rectH"] }
 
 -- Get list of all files
--- Filter for pairs of BMP and JSON files
--- Load the BMP into a texture
+-- Filter for pairs of IMG and JSON files
+-- Load the IMG into a texture
 -- Load the JSON file and work out list of rectangles for each frame
 -- Do this for every file
 
@@ -70,17 +71,17 @@ loadAnimationsFromDir rend path =
   --sequence (getAnimation rend <$> filepaths)
   getFilteredFileNames path >>= traverse (getAnimation rend)
 
--- Returns files where fst = BMP and snd = JSON
-getFilteredFileNames :: FilePath -> IO [(BMPFile, JSONFile)]
+-- Returns files where fst = IMG and snd = JSON
+getFilteredFileNames :: FilePath -> IO [(IMGFile, JSONFile)]
 getFilteredFileNames path = do
   filePath <- listDirectory path
   let sfList ext = sort $ filter (isSuffixOf ext) filePath
-  pure $ zip (BMPFile <$> sfList ".bmp") (JSONFile <$> sfList ".json")
+  pure $ zip (IMGFile <$> sfList ".bmp") (JSONFile <$> sfList ".json")
 
 -- Takes file and creates a texture out of it
-getTextureFromBMP :: SDL.Renderer -> BMPFile -> IO SDL.Texture
-getTextureFromBMP renderer (BMPFile bmp) = do
-  surface <- SDL.loadBMP bmp
+getTextureFromImg :: SDL.Renderer -> IMGFile -> IO SDL.Texture
+getTextureFromImg renderer (IMGFile img) = do
+  surface <- SDL.Image.load img
   texture <- SDL.createTextureFromSurface renderer surface
   SDL.freeSurface surface
   pure texture
@@ -95,9 +96,9 @@ getAnimationClips (JSONFile jsonPath) = do
     Right list -> pure $ Just $ map convertToRect list
 
 -- Takes a pair of file paths and returns an animation
-getAnimation :: SDL.Renderer -> (BMPFile, JSONFile) -> IO (Maybe (SDL.Texture, [SDL.Rectangle Int]))
+getAnimation :: SDL.Renderer -> (IMGFile, JSONFile) -> IO (Maybe (SDL.Texture, [SDL.Rectangle Int]))
 getAnimation rend pair = do
-  tex <- getTextureFromBMP rend $ fst pair
+  tex <- getTextureFromImg rend $ fst pair
   rects <- getAnimationClips $ snd pair
   pure $ fmap (tex,) rects :: IO (Maybe (SDL.Texture, [SDL.Rectangle Int]))
 

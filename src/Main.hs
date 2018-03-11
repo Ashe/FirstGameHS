@@ -7,6 +7,7 @@ import Foreign.C.Types
 import SDL.Vect
 import SDL (($=))
 import qualified SDL
+import qualified SDL.Image
 import Data.List (foldl')
 import SDL.Raw.Timer as SDL hiding (delay)
 import Text.Pretty.Simple
@@ -109,7 +110,7 @@ main = do
   SDL.rendererDrawColor renderer $= V4 maxBound maxBound maxBound maxBound
 
   -- Make a surface from file
-  xOutSurface <- getDataFileName "Assets/foo.bmp" >>= SDL.loadBMP
+  xOutSurface <- getDataFileName "Assets/foo.bmp" >>= SDL.Image.load
   texture <- SDL.createTextureFromSurface renderer xOutSurface
 
   -- Free the surface as we have a texture now
