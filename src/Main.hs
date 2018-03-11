@@ -12,7 +12,7 @@ import Data.List (foldl')
 import SDL.Raw.Timer as SDL hiding (delay)
 import Text.Pretty.Simple
 
-import Animations
+import SDLAnimations
 
 import Paths_FirstGameHS(getDataFileName)
 
@@ -110,7 +110,7 @@ main = do
   SDL.rendererDrawColor renderer $= V4 maxBound maxBound maxBound maxBound
 
   -- Make a surface from file
-  xOutSurface <- getDataFileName "Assets/foo.bmp" >>= SDL.Image.load
+  xOutSurface <- getDataFileName "Assets/foo.bm" >>= SDL.Image.load
   texture <- SDL.createTextureFromSurface renderer xOutSurface
 
   -- Free the surface as we have a texture now

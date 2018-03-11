@@ -28,4 +28,5 @@ executable FirstGameHS
                         , aeson-pretty
                         , bytestring
   other-modules:        Paths_FirstGameHS
-                        , Animations
+                        , SDLAnimations
+                        , AnimationLoader
