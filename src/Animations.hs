@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TupleSections #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 -- This module is responsible for loading in images as animations
 
@@ -29,34 +30,36 @@ newtype IMGFile = IMGFile FilePath
 newtype JSONFile = JSONFile FilePath
 
 -- Creation of types for JSON parsing
+newtype AnimationSet = AnimationSet [Animation]
+  deriving(Show, Generic)
+instance ToJSON AnimationSet
+instance FromJSON AnimationSet
+
+-- Individual animations
+data Animation =
+  Animation { name    :: String 
+            , frames  :: [Frame]
+            , loop    :: Bool
+            } deriving (Show, Generic)
+instance ToJSON Animation
+instance FromJSON Animation
+
+-- Individual frames of an animation
 data Frame =
   Frame { rectX :: Int
         , rectY :: Int
         , rectW :: Int
         , rectH :: Int
-        } deriving (Show)
-
-instance ToJSON Frame where
-  toJSON (Frame rectX rectY rectW rectH) =
-    object  [ "rectX" .= rectX
-            , "rectY" .= rectY
-            , "rectW" .= rectW
-            , "rectH" .= rectH ]
-
-instance FromJSON Frame where
-  parseJSON (Object v) =
-    Frame <$> v .: "rectX"
-          <*> v .: "rectY"
-          <*> v .: "rectW"
-          <*> v .: "rectH"
-  parseJSON _ = mzero
+        } deriving (Show, Generic)
+instance ToJSON Frame
+instance FromJSON Frame
 
 -- Outputs a sample of frames for animation to the path specified
 spitOutJSON :: FilePath -> IO ()
 spitOutJSON path = Data.ByteString.Lazy.writeFile path $ 
-  encodePretty' config [Frame 1 2 3 4, Frame 5 6 7 8]
+  encodePretty' config (AnimationSet [Animation "basic_0" [Frame 1 2 3 4, Frame 5 6 7 8] True, Animation "basic_0" [Frame 1 2 3 4, Frame 5 6 7 8] False])
   where config = defConfig { confCompare = keyOrder 
-    ["rectX", "rectY", "rectW", "rectH"] }
+    ["name", "loop",  "rectX", "rectY", "rectW", "rectH"] }
 
 -- Get list of all files
 -- Filter for pairs of IMG and JSON files
