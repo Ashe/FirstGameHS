@@ -55,11 +55,9 @@ walkingSpeed = V2 1 0
 gravity :: V2 CDouble
 gravity = V2 0 0.7
 
-
 -- These simplify matching on a specific key code
 pattern KeyPressed a <- (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Pressed False (SDL.Keysym _ a _)))
 pattern KeyReleased a <- (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Released _ (SDL.Keysym _ a _)))
-
 
 -- This processed input and modifies velocities of things in our world accordingly
 -- and then returns the new world
@@ -70,7 +68,6 @@ processInput state@(State oldGuy@(Guy _ curVel) _) (KeyPressed SDL.KeycodeLeft) 
   state { entities = oldGuy {velocity = negate walkingSpeed + curVel}}
 processInput state@(State oldGuy@(Guy _ curVel) _) (KeyPressed SDL.KeycodeRight) =
   state { entities = oldGuy {velocity = walkingSpeed + curVel}}
-
 
 processInput state@(State oldGuy@(Guy _ curVel) _) (KeyReleased SDL.KeycodeUp) =
   state { entities = oldGuy {velocity = curVel - jumpVelocity}}
@@ -87,7 +84,6 @@ updateWorld delta state@(State (Guy (P pos) vel) _) =
       fixedX = max 0 $ min newPosX (fromIntegral screenWidth - 50)
       fixedY = max 0 $ min (fromIntegral screenHeight - 100) newPosY
    in state {entities = Guy (P $ V2 fixedX fixedY) vel }
-
 
 main :: IO ()
 main = do
@@ -118,7 +114,6 @@ main = do
 
   -- Free the surface as we have a texture now
   SDL.freeSurface xOutSurface
-
 
   let loop last state = do
         events <- SDL.pollEvents
