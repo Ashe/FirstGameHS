@@ -65,7 +65,7 @@ spitOutJSON path = Data.ByteString.Lazy.writeFile path $
         AnimationData "walk_0" True [Frame 1 2 3 4, Frame 5 6 7 8]]]
 
   where config = defConfig { confCompare = keyOrder 
-    ["entityName", "tag", "animations", "name", "loop", "tag", "rectX", "rectY", "rectW", "rectH"] }
+    ["entityNameData", "tagData", "nameData", "loopData", "rectX", "rectY", "rectW", "rectH"] }
 
 -- Takes a file and extracts a list of rectangles
 getAnimationDataFromJSON :: JSONFile -> IO (Maybe [AnimationSetData])

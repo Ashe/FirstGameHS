@@ -1,83 +1,671 @@
 [
     {
-        "entityNameData": "example_character",
+        "entityNameData": "rogue",
         "tagData": "male",
         "animationData": [
             {
+                "nameData": "idle",
                 "loopData": true,
-                "nameData": "idle_0",
                 "frameData": [
                     {
-                        "rectX": 1,
-                        "rectY": 2,
-                        "rectW": 3,
-                        "rectH": 4
+                        "rectX": 0,
+                        "rectY": 0,
+                        "rectW": 32,
+                        "rectH": 32
                     },
                     {
-                        "rectX": 5,
-                        "rectY": 6,
-                        "rectW": 7,
-                        "rectH": 8
+                        "rectX": 32,
+                        "rectY": 0,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 64,
+                        "rectY": 0,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 96,
+                        "rectY": 0,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 128,
+                        "rectY": 0,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 160,
+                        "rectY": 0,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 192,
+                        "rectY": 0,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 224,
+                        "rectY": 0,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 256,
+                        "rectY": 0,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 288,
+                        "rectY": 0,
+                        "rectW": 32,
+                        "rectH": 32
                     }
                 ]
             },
             {
-                "loopData": true,
-                "nameData": "walk_0",
+                "nameData": "gesture",
+                "loopData": false,
                 "frameData": [
                     {
-                        "rectX": 1,
-                        "rectY": 2,
-                        "rectW": 3,
-                        "rectH": 4
+                        "rectX": 0,
+                        "rectY": 32,
+                        "rectW": 32,
+                        "rectH": 32
                     },
                     {
-                        "rectX": 5,
-                        "rectY": 6,
-                        "rectW": 7,
-                        "rectH": 8
+                        "rectX": 32,
+                        "rectY": 32,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 64,
+                        "rectY": 32,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 96,
+                        "rectY": 32,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 128,
+                        "rectY": 32,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 160,
+                        "rectY": 32,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 192,
+                        "rectY": 32,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 224,
+                        "rectY": 32,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 256,
+                        "rectY": 32,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 288,
+                        "rectY": 32,
+                        "rectW": 32,
+                        "rectH": 32
+                    }
+                ]
+            },
+            {
+                "nameData": "walk",
+                "loopData": true,
+                "frameData": [
+                    {
+                        "rectX": 0,
+                        "rectY": 64,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 32,
+                        "rectY": 64,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 64,
+                        "rectY": 64,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 96,
+                        "rectY": 64,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 128,
+                        "rectY": 64,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 160,
+                        "rectY": 64,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 192,
+                        "rectY": 64,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 224,
+                        "rectY": 64,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 256,
+                        "rectY": 64,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 288,
+                        "rectY": 64,
+                        "rectW": 32,
+                        "rectH": 32
+                    }
+                ]
+            },
+            {
+                "nameData": "attack",
+                "loopData": false,
+                "frameData": [
+                    {
+                        "rectX": 0,
+                        "rectY": 96,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 32,
+                        "rectY": 96,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 64,
+                        "rectY": 96,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 96,
+                        "rectY": 96,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 128,
+                        "rectY": 96,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 160,
+                        "rectY": 96,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 192,
+                        "rectY": 96,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 224,
+                        "rectY": 96,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 256,
+                        "rectY": 96,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 288,
+                        "rectY": 96,
+                        "rectW": 32,
+                        "rectH": 32
+                    }
+                ]
+            },
+            {
+                "nameData": "die",
+                "loopData": false,
+                "frameData": [
+                    {
+                        "rectX": 0,
+                        "rectY": 128,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 32,
+                        "rectY": 128,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 64,
+                        "rectY": 128,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 96,
+                        "rectY": 128,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 128,
+                        "rectY": 128,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 160,
+                        "rectY": 128,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 192,
+                        "rectY": 128,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 224,
+                        "rectY": 128,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 256,
+                        "rectY": 128,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 288,
+                        "rectY": 128,
+                        "rectW": 32,
+                        "rectH": 32
                     }
                 ]
             }
         ]
     },
     {
-        "entityNameData": "example_character",
+        "entityNameData": "rogue",
         "tagData": "female",
         "animationData": [
             {
+                "nameData": "idle",
                 "loopData": true,
-                "nameData": "idle_0",
                 "frameData": [
                     {
-                        "rectX": 1,
-                        "rectY": 2,
-                        "rectW": 3,
-                        "rectH": 4
+                        "rectX": 0,
+                        "rectY": 160,
+                        "rectW": 32,
+                        "rectH": 32
                     },
                     {
-                        "rectX": 5,
-                        "rectY": 6,
-                        "rectW": 7,
-                        "rectH": 8
+                        "rectX": 32,
+                        "rectY": 160,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 64,
+                        "rectY": 160,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 96,
+                        "rectY": 160,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 128,
+                        "rectY": 160,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 160,
+                        "rectY": 160,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 192,
+                        "rectY": 160,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 224,
+                        "rectY": 160,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 256,
+                        "rectY": 160,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 288,
+                        "rectY": 160,
+                        "rectW": 32,
+                        "rectH": 32
                     }
                 ]
             },
             {
-                "loopData": true,
-                "nameData": "walk_0",
+                "nameData": "gesture",
+                "loopData": false,
                 "frameData": [
                     {
-                        "rectX": 1,
-                        "rectY": 2,
-                        "rectW": 3,
-                        "rectH": 4
+                        "rectX": 0,
+                        "rectY": 192,
+                        "rectW": 32,
+                        "rectH": 32
                     },
                     {
-                        "rectX": 5,
-                        "rectY": 6,
-                        "rectW": 7,
-                        "rectH": 8
+                        "rectX": 32,
+                        "rectY": 192,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 64,
+                        "rectY": 192,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 96,
+                        "rectY": 192,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 128,
+                        "rectY": 192,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 160,
+                        "rectY": 192,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 192,
+                        "rectY": 192,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 224,
+                        "rectY": 192,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 256,
+                        "rectY": 192,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 288,
+                        "rectY": 192,
+                        "rectW": 32,
+                        "rectH": 32
+                    }
+                ]
+            },
+            {
+                "nameData": "walk",
+                "loopData": true,
+                "frameData": [
+                    {
+                        "rectX": 0,
+                        "rectY": 224,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 32,
+                        "rectY": 224,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 64,
+                        "rectY": 224,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 96,
+                        "rectY": 224,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 128,
+                        "rectY": 224,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 160,
+                        "rectY": 224,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 192,
+                        "rectY": 224,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 224,
+                        "rectY": 224,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 256,
+                        "rectY": 224,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 288,
+                        "rectY": 224,
+                        "rectW": 32,
+                        "rectH": 32
+                    }
+                ]
+            },
+            {
+                "nameData": "attack",
+                "loopData": false,
+                "frameData": [
+                    {
+                        "rectX": 0,
+                        "rectY": 256,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 32,
+                        "rectY": 256,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 64,
+                        "rectY": 256,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 96,
+                        "rectY": 256,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 128,
+                        "rectY": 256,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 160,
+                        "rectY": 256,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 192,
+                        "rectY": 256,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 224,
+                        "rectY": 256,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 256,
+                        "rectY": 256,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 288,
+                        "rectY": 256,
+                        "rectW": 32,
+                        "rectH": 32
+                    }
+                ]
+            },
+            {
+                "nameData": "die",
+                "loopData": false,
+                "frameData": [
+                    {
+                        "rectX": 0,
+                        "rectY": 288,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 32,
+                        "rectY": 288,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 64,
+                        "rectY": 288,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 96,
+                        "rectY": 288,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 128,
+                        "rectY": 288,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 160,
+                        "rectY": 288,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 192,
+                        "rectY": 288,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 224,
+                        "rectY": 288,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 256,
+                        "rectY": 288,
+                        "rectW": 32,
+                        "rectH": 32
+                    },
+                    {
+                        "rectX": 288,
+                        "rectY": 288,
+                        "rectW": 32,
+                        "rectH": 32
                     }
                 ]
             }
