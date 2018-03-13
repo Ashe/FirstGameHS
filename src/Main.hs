@@ -129,10 +129,12 @@ main = do
 
   animsList <- loadAnimations "Assets/rogue.json"
   let animationSet = getAnimationSet "rogue" "male" =<< animsList
-      animation = getAnimation "die" =<< animationSet
+      animation = getAnimation "idle" =<< animationSet
       frame = fmap (getFrame 0) animation
+      initAnimationState = 
+        AnimationState animationSet animation [] "idle" 0
 
-  let loop last state = do
+  let loop last state animState = do
 
         events <- SDL.pollEvents
 
@@ -147,8 +149,7 @@ main = do
         -- Update functions
         let worldAfterInput = foldl' processInput state payloads
             newState        = updateWorld delta worldAfterInput
-
-        SDL.clear renderer
+            newAnimState    = updateAnimationState animState
 
         -- Render functions
         SDL.copy renderer texture Nothing Nothing
@@ -157,17 +158,17 @@ main = do
         let drawColor = SDL.rendererDrawColor renderer
         drawColor $= V4 255 255 255 0
 
-        SDL.copy renderer player frame $ Just $ SDL.Rectangle (truncate <$> position (entities newState)) (V2 100 100)
+        SDL.copy renderer player (getCurrentFrame newAnimState) $ Just $ SDL.Rectangle (truncate <$> position (entities newState)) (V2 100 100)
 
         -- My attempt at an FPS limit. I don't write games so it is possible this is incorrect
         let frameDelay = 1000 / fromIntegral frameLimit
         when (delta < frameDelay) $ SDL.delay (truncate $ frameDelay - delta)
 
         SDL.present renderer
-        unless quit $ loop now newState
+        unless quit $ loop now newState newAnimState
 
   now <- SDL.getPerformanceCounter
-  loop now initialState
+  loop now initialState initAnimationState
 
   SDL.destroyWindow window
   SDL.quit

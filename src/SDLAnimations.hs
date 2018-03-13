@@ -2,10 +2,13 @@
 
 module SDLAnimations ( AnimationSet()
                      , Animation()
+                     , AnimationState(AnimationState, currentAnimation, frameNumber)
                      , loadAnimations
                      , getAnimationSet
                      , getAnimation
-                     , getFrame)
+                     , getFrame
+                     , updateAnimationState
+                     , getCurrentFrame)
   where
 
 import Control.Monad
@@ -20,6 +23,15 @@ import qualified SDL
 import qualified SDL.Image
 
 import AnimationLoader
+
+-- State for keeping track of animations
+data AnimationState =
+  AnimationState  { animationSet      :: Maybe AnimationSet
+                  , currentAnimation  :: Maybe Animation
+                  , animationBuffer   :: [String]
+                  , defaultAnimation  :: String
+                  , frameNumber       :: Int
+                  } deriving (Show)
 
 -- Non-serializable AnimationSet
 data AnimationSet = 
@@ -62,4 +74,21 @@ getAnimation animName (AnimationSet _ _ anims) = ret $ filter checkAnim anims
 
 -- Get a frame from an animation quickly
 getFrame :: Int -> Animation -> SDL.Rectangle CInt
-getFrame frame (Animation _ _ frames) = frames !! frame
+getFrame frame (Animation _ _ frames) = newNum
+  where newNum
+          | length frames > frame = frames !! frame
+          | otherwise = head frames
+
+-- Add one frame to the animation state, and wrap it round if need be
+updateAnimationState :: AnimationState -> AnimationState
+updateAnimationState state = state {frameNumber = newFrame}
+  where nextFrame = frameNumber state + 1
+        len Nothing = 0
+        len (Just x) = length (frames x)
+        newFrame
+          | len (currentAnimation state) > nextFrame = nextFrame
+          | otherwise = 0
+
+-- Uses information in the animation state to get the right frame
+getCurrentFrame :: AnimationState -> Maybe (SDL.Rectangle CInt)
+getCurrentFrame state = getFrame (frameNumber state) <$> currentAnimation state
