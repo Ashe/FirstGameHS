@@ -1,11 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TupleSections #-}
-
 -- This module is responsible for taking animationData and applying it into an SDL context
 
 module SDLAnimations ( AnimationSet()
                      , Animation()
-                     , loadAnimationsFromDir)
+                     , loadAnimations
+                     , getAnimationSet
+                     , getAnimation
+                     , getFrame)
   where
 
 import Control.Monad
@@ -13,6 +13,8 @@ import System.Directory
 import Data.List
 import Data.Monoid
 import Data.Functor
+import Data.Maybe
+import Foreign.C.Types
 import SDL
 import qualified SDL
 import qualified SDL.Image
@@ -30,59 +32,34 @@ data AnimationSet =
 data Animation =
   Animation { name    :: String 
             , loop    :: Bool
-            , frames  :: [SDL.Rectangle Int]
+            , frames  :: [SDL.Rectangle CInt]
             } deriving (Show)
 
--- Newtype for image files
-newtype IMGFile = IMGFile FilePath
-
 -- Export list of tuples of textures and clips
-loadAnimationsFromDir :: SDL.Renderer -> FilePath -> IO [Maybe (SDL.Texture, [AnimationSet])]
-loadAnimationsFromDir rend path =
-  --filepaths <- getFilteredFileNames path
-  --sequence (getAnimation rend <$> filepaths)
-  getFilteredFileNames path >>= traverse (getAnimation rend)
+loadAnimations :: FilePath -> IO (Maybe [AnimationSet])
+loadAnimations path = fmap (map convertToAnimationSet) <$> getAnimationDataFromJSON (JSONFile path)
 
--- Returns files where fst = IMG and snd = JSON
-getFilteredFileNames :: FilePath -> IO [(IMGFile, JSONFile)]
-getFilteredFileNames path = do
-  filePath <- listDirectory path
-  let sfList ext = sort $ filter (isSuffixOf ext) filePath
-  pure $ zip (IMGFile <$> sfList ".bmp") (JSONFile <$> sfList ".json")
+-- Take some data and return a useful datatype
+convertToAnimationSet :: AnimationSetData -> AnimationSet
+convertToAnimationSet (AnimationSetData entName tag animations) = 
+  AnimationSet entName tag $ map convertToAnimation animations
+  where convertToAnimation (AnimationData animName loop frames) = Animation animName loop $ map convertToRect frames
+        convertToRect (Frame x y w h) = SDL.Rectangle (P $ V2 (fromIntegral x) (fromIntegral y)) (V2 (fromIntegral w) (fromIntegral h))
 
--- Takes file and creates a texture out of it
-getTextureFromImg :: SDL.Renderer -> IMGFile -> IO SDL.Texture
-getTextureFromImg renderer (IMGFile img) = do
-  surface <- SDL.Image.load img
-  texture <- SDL.createTextureFromSurface renderer surface
-  SDL.freeSurface surface
-  pure texture
+-- Takes a list of animationsets and returns the correct set
+getAnimationSet :: String -> String -> [AnimationSet] -> Maybe AnimationSet
+getAnimationSet entity tag set = ret $ filter checkSets set
+  where checkSets (AnimationSet entity' tag' _) = entity == entity' && tag == tag'
+        ret (x : _) = Just x
+        ret [] = Nothing
 
--- Takes a pair of file paths and returns an animation
-getAnimation :: SDL.Renderer -> (IMGFile, JSONFile) -> IO (Maybe (SDL.Texture, [AnimationSet]))
-getAnimation rend pair = do
-  tex <- getTextureFromImg rend $ fst pair
-  rects <- getSDLAnimationSetsFromJSON $ snd pair
-  pure $ fmap (tex,) rects :: IO (Maybe (SDL.Texture, [AnimationSet]))
+-- Takes an animation set and returns an animation
+getAnimation :: String -> AnimationSet -> Maybe Animation
+getAnimation animName (AnimationSet _ _ anims) = ret $ filter checkAnim anims
+  where checkAnim (Animation name _ _) = name == animName
+        ret (x : xs) = Just x
+        ret [] = Nothing
 
--- Takes a file and extracts a list of rectangles
-getSDLAnimationSetsFromJSON :: JSONFile -> IO (Maybe [AnimationSet])
-getSDLAnimationSetsFromJSON jsonFile =
-  fmap (map convertToAnimationSet) <$> getAnimationDataFromJSON jsonFile
-    where convertToRect (Frame x y w h) = SDL.Rectangle (P $ V2 x y) (V2 x y)
-          convertToAnimation (AnimationData animName loop frames) = Animation animName loop $ map convertToRect frames
-          convertToAnimationSet (AnimationSetData entName tag animations) 
-            = AnimationSet entName tag $ map convertToAnimation animations
-
--- First attempt
---  json <- getAnimationSetsFromJSON jsonFile
---  case json of
---    Nothing -> pure Nothing
---    Just list -> pure $ Just $ map convertToAnimationSet list
-
--- Second attempt
---  getAnimationDataFromJSON :: JSONFile -> IO (Maybe [AnimationSetData])
---  pure . fmap (map convertToAnimationSet) =<< getAnimationDataFromJSON jsonFile
-
---  Final attempt
---  fmap (map convertToAnimationSet) <$> getAnimationDataFromJSON jsonFile
+-- Get a frame from an animation quickly
+getFrame :: Int -> Animation -> SDL.Rectangle CInt
+getFrame frame (Animation _ _ frames) = frames !! frame
