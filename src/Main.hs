@@ -129,7 +129,7 @@ main = do
 
   animsList <- loadAnimations "Assets/rogue.json"
   let animationSet = getAnimationSet "rogue" "male" =<< animsList
-      animation = getAnimation "walk" =<< animationSet
+      animation = getAnimation "die" =<< animationSet
       frame = fmap (getFrame 0) animation
       initAnimationState = 
         AnimationState animationSet animation [] "idle" 0 0

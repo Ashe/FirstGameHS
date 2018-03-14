@@ -91,16 +91,20 @@ updateAnimationState delta tickRate state =
   state
   { tickCount = fst nextAnimationTick
   , frameNumber = newFrameNumber $ snd nextAnimationTick }
-  where nextAnimationTick = calculateTickCount delta tickRate $ tickCount state
+  where nextAnimationTick = calculateTickCount delta tickRate state
         newFrameNumber b
           | b = advanceAnimationFrame state
           | otherwise = frameNumber state
 
 -- Increases the tick count and sets a flag if there should be a new frame
-calculateTickCount :: CDouble -> CDouble -> CDouble -> (CDouble, Bool)
-calculateTickCount delta tickRate tickCount 
-  | delta + tickCount > tickRate = (delta + tickCount - tickRate, True)
-  | otherwise = (delta + tickCount, False)
+calculateTickCount :: CDouble -> CDouble -> AnimationState -> (CDouble, Bool)
+calculateTickCount delta tickRate state 
+  | delta + ticks > tickRate = (delta + ticks - tickRate, nextFrame (currentAnimation state))
+  | otherwise = (delta + ticks, False)
+  where ticks = tickCount state
+        nextFrame (Just anim)= loop anim || not (lastFrame anim)
+        nextFrame _ = False
+        lastFrame anim = frameNumber state >= length (frames anim) - 1
 
 -- Move the animation to the next frame if the tickCount is high
 advanceAnimationFrame :: AnimationState -> Int
