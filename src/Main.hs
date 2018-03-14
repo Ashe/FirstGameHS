@@ -22,16 +22,16 @@ screenWidth, screenHeight :: CInt
 frameLimit :: Int
 frameLimit = 60
 
-data GameState
-  = State {
-      entities :: Guy
+data GameState = 
+  State
+  { entities :: Guy
     , uselessIntForCompilerWarning :: Int
   }
 
 -- This is our game world. It only consists of one lonely guy
 -- who has a position and a velocity
-data Guy
-    = Guy
+data Guy = 
+    Guy
     { position :: Point V2 CDouble
     , velocity :: V2 CDouble
     , tag :: String

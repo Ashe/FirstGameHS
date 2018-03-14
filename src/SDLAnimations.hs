@@ -26,27 +26,30 @@ import AnimationLoader
 
 -- State for keeping track of animations
 data AnimationState =
-  AnimationState  { animationSet      :: Maybe AnimationSet
-                  , currentAnimation  :: Maybe Animation
-                  , animationBuffer   :: [String]
-                  , defaultAnimation  :: String
-                  , frameNumber       :: Int
-                  , tickCount         :: CDouble
-                  } deriving (Show)
+  AnimationState  
+    { animationSet      :: Maybe AnimationSet
+    , currentAnimation  :: Maybe Animation
+    , animationBuffer   :: [String]
+    , defaultAnimation  :: String
+    , frameNumber       :: Int
+    , tickCount         :: CDouble
+    } deriving (Show)
 
 -- Non-serializable AnimationSet
 data AnimationSet = 
-  AnimationSet  { entityName  :: String
-                , tag         :: String
-                , animations  :: [Animation]
-                } deriving (Show)
+  AnimationSet
+    { entityName  :: String
+    , tag         :: String
+    , animations  :: [Animation]
+    } deriving (Show)
 
 -- Non-serializable Animation
 data Animation =
-  Animation { name    :: String 
-            , loop    :: Bool
-            , frames  :: [SDL.Rectangle CInt]
-            } deriving (Show)
+  Animation 
+    { name    :: String 
+    , loop    :: Bool
+    , frames  :: [SDL.Rectangle CInt]
+    } deriving (Show)
 
 -- Export list of tuples of textures and clips
 loadAnimations :: FilePath -> IO (Maybe [AnimationSet])
@@ -56,8 +59,10 @@ loadAnimations path = fmap (map convertToAnimationSet) <$> getAnimationDataFromJ
 convertToAnimationSet :: AnimationSetData -> AnimationSet
 convertToAnimationSet (AnimationSetData entName tag animations) = 
   AnimationSet entName tag $ map convertToAnimation animations
-  where convertToAnimation (AnimationData animName loop frames) = Animation animName loop $ map convertToRect frames
-        convertToRect (Frame x y w h) = SDL.Rectangle (P $ V2 (fromIntegral x) (fromIntegral y)) (V2 (fromIntegral w) (fromIntegral h))
+  where convertToAnimation (AnimationData animName loop frames) = 
+          Animation animName loop $ map convertToRect frames
+        convertToRect (Frame x y w h) = 
+          SDL.Rectangle (P $ V2 (fromIntegral x) (fromIntegral y)) (V2 (fromIntegral w) (fromIntegral h))
 
 -- Takes a list of animationsets and returns the correct set
 getAnimationSet :: String -> String -> [AnimationSet] -> Maybe AnimationSet
