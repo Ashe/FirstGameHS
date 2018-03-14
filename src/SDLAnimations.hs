@@ -2,7 +2,7 @@
 
 module SDLAnimations ( AnimationSet()
                      , Animation()
-                     , AnimationState(AnimationState, currentAnimation, frameNumber)
+                     , AnimationState(AnimationState, currentAnimation, frameNumber, tickCount)
                      , loadAnimations
                      , getAnimationSet
                      , getAnimation
@@ -31,6 +31,7 @@ data AnimationState =
                   , animationBuffer   :: [String]
                   , defaultAnimation  :: String
                   , frameNumber       :: Int
+                  , tickCount         :: CDouble
                   } deriving (Show)
 
 -- Non-serializable AnimationSet
@@ -80,14 +81,32 @@ getFrame frame (Animation _ _ frames) = newNum
           | otherwise = head frames
 
 -- Add one frame to the animation state, and wrap it round if need be
-updateAnimationState :: AnimationState -> AnimationState
-updateAnimationState state = state {frameNumber = newFrame}
+updateAnimationState :: CDouble -> CDouble -> AnimationState -> AnimationState
+updateAnimationState delta tickRate state = 
+  state
+  { tickCount = fst nextAnimationTick
+  , frameNumber = newFrameNumber $ snd nextAnimationTick }
+  where nextAnimationTick = calculateTickCount delta tickRate $ tickCount state
+        newFrameNumber b
+          | b = advanceAnimationFrame state
+          | otherwise = frameNumber state
+
+-- Increases the tick count and sets a flag if there should be a new frame
+calculateTickCount :: CDouble -> CDouble -> CDouble -> (CDouble, Bool)
+calculateTickCount delta tickRate tickCount 
+  | delta + tickCount > tickRate = (delta + tickCount - tickRate, True)
+  | otherwise = (delta + tickCount, False)
+
+-- Move the animation to the next frame if the tickCount is high
+advanceAnimationFrame :: AnimationState -> Int
+advanceAnimationFrame state = newFrame
   where nextFrame = frameNumber state + 1
         len Nothing = 0
         len (Just x) = length (frames x)
         newFrame
           | len (currentAnimation state) > nextFrame = nextFrame
           | otherwise = 0
+
 
 -- Uses information in the animation state to get the right frame
 getCurrentFrame :: AnimationState -> Maybe (SDL.Rectangle CInt)

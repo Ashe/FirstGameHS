@@ -21,6 +21,8 @@ import Data.ByteString.Lazy(writeFile)
 import Data.Functor
 import qualified Data.ByteString.Lazy as B
 
+import Paths_FirstGameHS(getDataFileName)
+
 -- Creation of types for JSON parsing
 data AnimationSetData = 
   AnimationSetData  { entityNameData  :: String
@@ -70,7 +72,8 @@ spitOutJSON path = Data.ByteString.Lazy.writeFile path $
 -- Takes a file and extracts a list of rectangles
 getAnimationDataFromJSON :: JSONFile -> IO (Maybe [AnimationSetData])
 getAnimationDataFromJSON (JSONFile jsonPath) = do
-  json <- (eitherDecode <$> B.readFile jsonPath) :: IO (Either String [AnimationSetData])
+  file <- getDataFileName jsonPath
+  json <- (eitherDecode <$> B.readFile file) :: IO (Either String [AnimationSetData])
   case json of
     Left err -> putStrLn err $> Nothing
     Right list -> pure $ Just list

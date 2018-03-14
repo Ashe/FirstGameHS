@@ -14,6 +14,7 @@ cabal-version:          >=1.10
 extra-source-files:     README.md
 data-files:             Assets/*.bmp
                         , Assets/*.png
+                        , Assets/*.json
 
 executable FirstGameHS
   hs-source-dirs:       src

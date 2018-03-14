@@ -54,13 +54,13 @@ initialState :: GameState
 initialState = State initialGuy 0
 
 jumpVelocity :: V2 CDouble
-jumpVelocity = V2 0 (-2)
+jumpVelocity = V2 0 (-800)
 
 walkingSpeed :: V2 CDouble
-walkingSpeed = V2 1 0
+walkingSpeed = V2 300 0
 
 gravity :: V2 CDouble
-gravity = V2 0 0.7
+gravity = V2 0 300
 
 -- These simplify matching on a specific key code
 pattern KeyPressed a <- (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Pressed False (SDL.Keysym _ a _)))
@@ -96,7 +96,7 @@ updateWorld delta state@(State (Guy (P pos) vel tag anim frame) _) =
 -- Takes file and creates a texture out of it
 getTextureFromImg :: SDL.Renderer -> FilePath -> IO SDL.Texture
 getTextureFromImg renderer img = do
-  surface <- SDL.Image.load img
+  surface <- SDL.Image.load =<< getDataFileName img
   texture <- SDL.createTextureFromSurface renderer surface
   SDL.freeSurface surface
   pure texture
@@ -129,46 +129,38 @@ main = do
 
   animsList <- loadAnimations "Assets/rogue.json"
   let animationSet = getAnimationSet "rogue" "male" =<< animsList
-      animation = getAnimation "idle" =<< animationSet
+      animation = getAnimation "walk" =<< animationSet
       frame = fmap (getFrame 0) animation
       initAnimationState = 
-        AnimationState animationSet animation [] "idle" 0
+        AnimationState animationSet animation [] "idle" 0 0
 
-  let loop last state animState = do
+  let loop lastTicks state animState = do
 
+        ticks <- SDL.getTicks
         events <- SDL.pollEvents
 
-        -- Need to calculate the time delta
-        now <- SDL.getPerformanceCounter
-        freq <- SDL.getPerformanceFrequency
-
-        let delta = (fromIntegral now - fromIntegral last) * 1000 / fromIntegral freq
+        let delta = 0.001 * (fromIntegral ticks - fromIntegral lastTicks)
             payloads = map SDL.eventPayload events
             quit = SDL.QuitEvent `elem` payloads
 
         -- Update functions
         let worldAfterInput = foldl' processInput state payloads
             newState        = updateWorld delta worldAfterInput
-            newAnimState    = updateAnimationState animState
+            newAnimState    = updateAnimationState delta 0.1 animState
 
-        -- Render functions
+        -- Render functions (Background and player)
         SDL.copy renderer texture Nothing Nothing
-
-        -- Draw our world(guy) as a white rectangle
-        let drawColor = SDL.rendererDrawColor renderer
-        drawColor $= V4 255 255 255 0
-
         SDL.copy renderer player (getCurrentFrame newAnimState) $ Just $ SDL.Rectangle (truncate <$> position (entities newState)) (V2 100 100)
 
-        -- My attempt at an FPS limit. I don't write games so it is possible this is incorrect
+        -- Delay time until next frame to save processing power
         let frameDelay = 1000 / fromIntegral frameLimit
         when (delta < frameDelay) $ SDL.delay (truncate $ frameDelay - delta)
 
         SDL.present renderer
-        unless quit $ loop now newState newAnimState
+        unless quit $ loop ticks newState newAnimState
 
-  now <- SDL.getPerformanceCounter
-  loop now initialState initAnimationState
+  ticks <- SDL.getTicks
+  loop ticks initialState initAnimationState
 
   SDL.destroyWindow window
   SDL.quit
