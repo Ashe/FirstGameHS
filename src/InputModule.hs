@@ -9,11 +9,6 @@ module InputModule ( KeyBindings(KeyBindings)
   where
 
 import Control.Monad
-import System.Directory
-import Data.List
-import Data.Monoid
-import Data.Functor
-import Data.Maybe
 import Foreign.C.Types
 import SDL
 import qualified SDL
