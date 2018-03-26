@@ -3,11 +3,15 @@ module GameState  ( GameState(State)
                   , Options(Options)
                   , KeyBindings
                   , initialState
-                  , options
                   , entities
+                  , position
+                  , velocity
+                  , options
+                  , initialOptions
                   , screenRes
                   , frameLimit
-                  , position
+                  , keybindings
+                  , processInput
                   )
   where
 
@@ -73,6 +77,13 @@ initialOptions =
 
 -- Change the gamestate with input
 processInput :: GameState -> SDL.EventPayload -> GameState
-processInput state@(State (Options _ _ kbs) _) input = exec $ getBoundInput kbs input
-  where exec (Just f) = f state
+processInput state@(State (Options _ _ kbs) _) input = exec $ join func
+  where func = getBoundInput kbs <$> processEvent input
+        exec (Just f) = f state
         exec _ = state
+
+-- Retrieves the keycode and press-status of key
+processEvent :: SDL.EventPayload -> Maybe (SDL.Keycode, Bool)
+processEvent (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Pressed False (SDL.Keysym _ code _))) = Just (code, True)
+processEvent (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Released _ (SDL.Keysym _ code _))) = Just (code, False)
+processEvent _ = Nothing

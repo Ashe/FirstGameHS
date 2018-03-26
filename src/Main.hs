@@ -27,10 +27,6 @@ walkingSpeed = V2 300 0
 gravity :: V2 CDouble
 gravity = V2 0 300
 
--- These simplify matching on a specific key code
-pattern KeyPressed a <- (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Pressed False (SDL.Keysym _ a _)))
-pattern KeyReleased a <- (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Released _ (SDL.Keysym _ a _)))
-
 -- -- This processed input and modifies velocities of things in our world accordingly
 -- -- and then returns the new world
 -- processInput :: GameState -> SDL.EventPayload -> GameState
@@ -73,7 +69,9 @@ main = do
   SDL.initialize [SDL.InitVideo]
 
   -- Set up the first state
-  let state = initialState
+  let jump state@(State _ oldGuy@(Guy _ curVel _ _ _)) = state {entities = oldGuy {velocity = curVel * V2 1 0 + jumpVelocity}}
+      initOptions = initialOptions {keybindings = addBinding (SDL.KeycodeUp, True) (Just jump) blankKeyBindings}
+      state = initialState {options = initOptions}
 
   -- Create a window with the correct screensize and make it appear
   window <- SDL.createWindow "FirstGameHS"
@@ -112,8 +110,8 @@ main = do
             quit = SDL.QuitEvent `elem` payloads
 
         -- Update functions
-        -- let worldAfterInput = foldl' processInput state payloads
-        let newState        = updateWorld delta state
+        let worldAfterInput = foldl' processInput state payloads
+            newState        = updateWorld delta worldAfterInput
             newAnimState    = updateAnimationState delta 0.1 animState
 
         -- Render functions (Background and player)
@@ -128,7 +126,7 @@ main = do
         unless quit $ loop ticks newState newAnimState
 
   ticks <- SDL.getTicks
-  loop ticks initialState initAnimationState
+  loop ticks state initAnimationState
 
   SDL.destroyWindow window
   SDL.quit
