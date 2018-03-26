@@ -27,25 +27,6 @@ walkingSpeed = V2 300 0
 gravity :: V2 CDouble
 gravity = V2 0 300
 
--- -- This processed input and modifies velocities of things in our world accordingly
--- -- and then returns the new world
--- processInput :: GameState -> SDL.EventPayload -> GameState
--- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyPressed SDL.KeycodeUp) =
---   state { entities = oldGuy {velocity = curVel * V2 1 0 + jumpVelocity}}
--- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyPressed SDL.KeycodeLeft) =
---   state { entities = oldGuy {velocity = negate walkingSpeed + curVel}}
--- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyPressed SDL.KeycodeRight) =
---   state { entities = oldGuy {velocity = walkingSpeed + curVel}}
---
--- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyReleased SDL.KeycodeUp) =
---   state { entities = oldGuy {velocity = curVel - jumpVelocity}}
--- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyReleased SDL.KeycodeLeft) =
---   state { entities = oldGuy {velocity = curVel - negate walkingSpeed}}
--- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyReleased SDL.KeycodeRight) =
---   state { entities = oldGuy {velocity = curVel - walkingSpeed}}
---
--- processInput s _ = s
-
 updateWorld :: CDouble -> GameState -> GameState
 updateWorld delta state@(State (Options res _ _) (Guy (P pos) vel tag anim frame)) = 
   let (V2 newPosX newPosY) =  pos + (gravity + vel) * V2 delta delta
@@ -69,9 +50,21 @@ main = do
   SDL.initialize [SDL.InitVideo]
 
   -- Set up the first state
-  let jump state@(State _ oldGuy@(Guy _ curVel _ _ _)) = state {entities = oldGuy {velocity = curVel * V2 1 0 + jumpVelocity}}
-      initOptions = initialOptions {keybindings = addBinding (SDL.KeycodeUp, True) (Just jump) blankKeyBindings}
-      state = initialState {options = initOptions}
+  let jump state@(State _ oldGuy@(Guy _ curVel _ _ _)) = state { entities = oldGuy { velocity = curVel * V2 1 0 + jumpVelocity }}
+      fall state@(State _ oldGuy@(Guy _ curVel _ _ _)) = state { entities = oldGuy { velocity = curVel - jumpVelocity }}
+      right state@(State _ oldGuy@(Guy _ curVel _ _ _)) = state { entities = oldGuy { velocity = walkingSpeed + curVel }}
+      left state@(State _ oldGuy@(Guy _ curVel _ _ _)) = state { entities = oldGuy { velocity = curVel - walkingSpeed }}
+
+      initOptions = initialOptions { keybindings = 
+        addBatchBindings 
+          [ ((SDL.KeycodeUp, True), Just jump)
+          , ((SDL.KeycodeUp, False), Just fall)
+          , ((SDL.KeycodeRight, True), Just right)
+          , ((SDL.KeycodeRight, False), Just left)
+          , ((SDL.KeycodeLeft, True), Just left)
+          , ((SDL.KeycodeLeft, False), Just right)
+          ] blankKeyBindings }
+      state = initialState { options = initOptions }
 
   -- Create a window with the correct screensize and make it appear
   window <- SDL.createWindow "FirstGameHS"

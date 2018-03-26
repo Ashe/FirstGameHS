@@ -2,6 +2,7 @@
 
 module InputModule ( KeyBindings(KeyBindings)
                    , addBinding
+                   , addBatchBindings
                    , getBoundInput
                    , blankKeyBindings
                    )
@@ -23,14 +24,19 @@ import qualified Data.Map as Map
 -- newtype KeyBindings state = KeyBindings [(SDL.Keycode, Maybe (state -> state))]
 newtype KeyBindings state = KeyBindings (Map.Map (SDL.Keycode, Bool) (Maybe (state -> state)))
 
+-- Blank keybindings map
+blankKeyBindings :: KeyBindings state
+blankKeyBindings = KeyBindings Map.empty
+
 -- Get a function out of keybindings
 getBoundInput :: KeyBindings state -> (SDL.Keycode, Bool) -> Maybe (state -> state)
 getBoundInput (KeyBindings kbs) input = join $ Map.lookup input kbs
 
--- Add a function to a list of keybindings
+-- Set a function to a list of keybindings
 addBinding :: (SDL.Keycode, Bool) -> Maybe (state -> state) -> KeyBindings state -> KeyBindings state
 addBinding bind func (KeyBindings map) = KeyBindings $ Map.insert bind func map
 
--- Blank keybindings map
-blankKeyBindings :: KeyBindings state
-blankKeyBindings = KeyBindings Map.empty
+-- Add a batch of functions to the keymappings (overwriting when necessary)
+addBatchBindings :: [((SDL.Keycode, Bool), Maybe(state -> state))] -> KeyBindings state -> KeyBindings state
+addBatchBindings [] kbs = kbs
+addBatchBindings ((key, func):xs) kbs = addBatchBindings xs $ addBinding key func kbs
