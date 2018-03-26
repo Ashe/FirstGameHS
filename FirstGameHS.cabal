@@ -25,9 +25,12 @@ executable FirstGameHS
                         , sdl2-image
                         , pretty-simple
                         , directory
+                        , containers
                         , aeson
                         , aeson-pretty
                         , bytestring
   other-modules:        Paths_FirstGameHS
+                        , GameState
                         , SDLAnimations
                         , AnimationLoader
+                        , InputModule

@@ -12,46 +12,11 @@ import Data.List (foldl')
 import SDL.Raw.Timer as SDL hiding (delay)
 import Text.Pretty.Simple
 
+import GameState
 import SDLAnimations
+import InputModule
 
 import Paths_FirstGameHS(getDataFileName)
-
-screenWidth, screenHeight :: CInt
-(screenWidth, screenHeight) = (640, 480)
-
-frameLimit :: Int
-frameLimit = 60
-
-data GameState = 
-  State
-  { entities :: Guy
-    , uselessIntForCompilerWarning :: Int
-  }
-
--- This is our game world. It only consists of one lonely guy
--- who has a position and a velocity
-data Guy = 
-    Guy
-    { position :: Point V2 CDouble
-    , velocity :: V2 CDouble
-    , tag :: String
-    , animation :: String
-    , frame :: Int
-    } deriving (Show, Eq)
-
--- Our initial guy starts out with him roughly in the middle
-initialGuy :: Guy
-initialGuy =
-    Guy
-    { position = P $ V2 (fromIntegral screenWidth / 2) (fromIntegral $ screenHeight - 100)
-    , velocity = V2 0 0
-    , tag = "male"
-    , animation = "idle"
-    , frame = 0
-    }
-
-initialState :: GameState
-initialState = State initialGuy 0
 
 jumpVelocity :: V2 CDouble
 jumpVelocity = V2 0 (-800)
@@ -66,30 +31,30 @@ gravity = V2 0 300
 pattern KeyPressed a <- (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Pressed False (SDL.Keysym _ a _)))
 pattern KeyReleased a <- (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Released _ (SDL.Keysym _ a _)))
 
--- This processed input and modifies velocities of things in our world accordingly
--- and then returns the new world
-processInput :: GameState -> SDL.EventPayload -> GameState
-processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyPressed SDL.KeycodeUp) =
-  state { entities = oldGuy {velocity = curVel * V2 1 0 + jumpVelocity}}
-processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyPressed SDL.KeycodeLeft) =
-  state { entities = oldGuy {velocity = negate walkingSpeed + curVel}}
-processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyPressed SDL.KeycodeRight) =
-  state { entities = oldGuy {velocity = walkingSpeed + curVel}}
-
-processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyReleased SDL.KeycodeUp) =
-  state { entities = oldGuy {velocity = curVel - jumpVelocity}}
-processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyReleased SDL.KeycodeLeft) =
-  state { entities = oldGuy {velocity = curVel - negate walkingSpeed}}
-processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyReleased SDL.KeycodeRight) =
-  state { entities = oldGuy {velocity = curVel - walkingSpeed}}
-
-processInput s _ = s
+-- -- This processed input and modifies velocities of things in our world accordingly
+-- -- and then returns the new world
+-- processInput :: GameState -> SDL.EventPayload -> GameState
+-- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyPressed SDL.KeycodeUp) =
+--   state { entities = oldGuy {velocity = curVel * V2 1 0 + jumpVelocity}}
+-- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyPressed SDL.KeycodeLeft) =
+--   state { entities = oldGuy {velocity = negate walkingSpeed + curVel}}
+-- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyPressed SDL.KeycodeRight) =
+--   state { entities = oldGuy {velocity = walkingSpeed + curVel}}
+--
+-- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyReleased SDL.KeycodeUp) =
+--   state { entities = oldGuy {velocity = curVel - jumpVelocity}}
+-- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyReleased SDL.KeycodeLeft) =
+--   state { entities = oldGuy {velocity = curVel - negate walkingSpeed}}
+-- processInput state@(State oldGuy@(Guy _ curVel _ _ _) _) (KeyReleased SDL.KeycodeRight) =
+--   state { entities = oldGuy {velocity = curVel - walkingSpeed}}
+--
+-- processInput s _ = s
 
 updateWorld :: CDouble -> GameState -> GameState
-updateWorld delta state@(State (Guy (P pos) vel tag anim frame) _) = 
+updateWorld delta state@(State (Options res _ _) (Guy (P pos) vel tag anim frame)) = 
   let (V2 newPosX newPosY) =  pos + (gravity + vel) * V2 delta delta
-      fixedX = max 0 $ min newPosX (fromIntegral screenWidth - 50)
-      fixedY = max 0 $ min (fromIntegral screenHeight - 100) newPosY
+      fixedX = max 0 $ min newPosX (fromIntegral (fst res) - 50)
+      fixedY = max 0 $ min (fromIntegral (snd res) - 100) newPosY
    in state {entities = Guy (P $ V2 fixedX fixedY) vel tag anim frame }
 
 
@@ -107,9 +72,12 @@ main = do
   -- Initialise SDL
   SDL.initialize [SDL.InitVideo]
 
+  -- Set up the first state
+  let state = initialState
+
   -- Create a window with the correct screensize and make it appear
   window <- SDL.createWindow "FirstGameHS"
-    SDL.defaultWindow { SDL.windowInitialSize = V2 screenWidth screenHeight }
+    SDL.defaultWindow { SDL.windowInitialSize = uncurry V2 (screenRes (options state)) }
   SDL.showWindow window
 
   -- Create a renderer for the window for rendering textures
@@ -144,8 +112,8 @@ main = do
             quit = SDL.QuitEvent `elem` payloads
 
         -- Update functions
-        let worldAfterInput = foldl' processInput state payloads
-            newState        = updateWorld delta worldAfterInput
+        -- let worldAfterInput = foldl' processInput state payloads
+        let newState        = updateWorld delta state
             newAnimState    = updateAnimationState delta 0.1 animState
 
         -- Render functions (Background and player)
@@ -153,7 +121,7 @@ main = do
         SDL.copy renderer player (getCurrentFrame newAnimState) $ Just $ SDL.Rectangle (truncate <$> position (entities newState)) (V2 100 100)
 
         -- Delay time until next frame to save processing power
-        let frameDelay = 1000 / fromIntegral frameLimit
+        let frameDelay = 1000 / fromIntegral (frameLimit (options newState))
         when (delta < frameDelay) $ SDL.delay (truncate $ frameDelay - delta)
 
         SDL.present renderer
