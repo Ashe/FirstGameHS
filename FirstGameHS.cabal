@@ -31,6 +31,7 @@ executable FirstGameHS
                         , bytestring
   other-modules:        Paths_FirstGameHS
                         , GameState
+                        , Entity
                         , SDLAnimations
                         , AnimationLoader
                         , InputModule

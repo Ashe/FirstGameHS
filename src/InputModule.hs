@@ -1,12 +1,12 @@
 -- This module is responsible for handling input flexibly
 
-module InputModule ( KeyBindings(KeyBindings)
-                   , addBinding
-                   , addBatchBindings
-                   , getBoundInput
-                   , blankKeyBindings
-                   )
-  where
+module InputModule 
+  ( KeyBindings(KeyBindings)
+  , addBinding
+  , addBatchBindings
+  , getBoundInput
+  , blankKeyBindings
+  ) where
 
 import Control.Monad
 import Foreign.C.Types
@@ -16,7 +16,6 @@ import qualified SDL
 import qualified Data.Map as Map
 
 -- State for keeping track of animations
--- newtype KeyBindings state = KeyBindings [(SDL.Keycode, Maybe (state -> state))]
 newtype KeyBindings state = KeyBindings (Map.Map (SDL.Keycode, Bool) (Maybe (state -> state)))
 
 -- Blank keybindings map

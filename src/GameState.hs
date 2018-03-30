@@ -1,19 +1,16 @@
-module GameState  ( GameState(State)
-                  , Guy(Guy)
-                  , Options(Options)
-                  , KeyBindings
-                  , initialState
-                  , entities
-                  , position
-                  , velocity
-                  , options
-                  , initialOptions
-                  , screenRes
-                  , frameLimit
-                  , keybindings
-                  , processInput
-                  )
-  where
+module GameState  
+  ( GameState(State)
+  , Options(Options)
+  , KeyBindings
+  , initialState
+  , entities
+  , options
+  , initialOptions
+  , screenRes
+  , frameLimit
+  , keybindings
+  , processInput
+  ) where
 
 import Control.Monad
 import Foreign.C.Types
@@ -21,12 +18,13 @@ import SDL
 import qualified SDL
 
 import InputModule
+import Entity
 
 -- Hands the current state of the game to various functions
 data GameState = 
   State
   { options   :: Options
-  , entities  :: Guy
+  , entities  :: [Entity]
   }
 
 -- We will need this later so just making a newtype for now
@@ -37,35 +35,13 @@ data Options =
     , keybindings :: KeyBindings GameState
     }
 
--- This is our game world. It only consists of one lonely guy
--- who has a position and a velocity
-data Guy = 
-    Guy
-    { position :: Point V2 CDouble
-    , velocity :: V2 CDouble
-    , tag :: String
-    , animation :: String
-    , frame :: Int
-    } deriving (Show, Eq)
-
 initialState :: GameState
-initialState = State initialOptions (initialGuy initialOptions)
-
--- Our initial guy starts out with him roughly in the middle
-initialGuy :: Options -> Guy
-initialGuy opts =
-    Guy
-    { position = P $ V2 (fromIntegral (fst (screenRes opts)) / 2) (fromIntegral $ snd (screenRes opts) - 100)
-    , velocity = V2 0 0
-    , tag = "male"
-    , animation = "idle"
-    , frame = 0
-    }
+initialState = State initialOptions []
 
 initialOptions :: Options
 initialOptions =
   Options
-    { screenRes = (640, 480)
+    { screenRes = (1440, 1080)
     , frameLimit = 60
     , keybindings = blankKeyBindings :: KeyBindings GameState
     }

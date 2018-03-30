@@ -1,15 +1,16 @@
 -- This module is responsible for taking animationData and applying it into an SDL context
 
-module SDLAnimations ( AnimationSet()
-                     , Animation()
-                     , AnimationState(AnimationState, currentAnimation, frameNumber, tickCount)
-                     , loadAnimations
-                     , getAnimationSet
-                     , getAnimation
-                     , getFrame
-                     , updateAnimationState
-                     , getCurrentFrame)
-  where
+module SDLAnimations 
+  ( AnimationSet()
+  , Animation()
+  , AnimationState(AnimationState, currentAnimation, frameNumber, tickCount)
+  , loadAnimations
+  , getAnimationSet
+  , getAnimation
+  , getFrame
+  , updateAnimationState
+  , getCurrentFrame
+  ) where
 
 import Control.Monad
 import System.Directory
