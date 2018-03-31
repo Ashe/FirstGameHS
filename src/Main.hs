@@ -89,7 +89,7 @@ main = do
       player = 
         Guy
           { position  = P $ V2 0 0
-          , velocity  = V2 0 0
+          , velocity  = V2 15 15
           , texture   = playerTexture
           , animation = initAnimationState
           }

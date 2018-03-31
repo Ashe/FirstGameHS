@@ -41,7 +41,7 @@ updateGuy g st =
   { position =
     let (P pos) = position g
         res = screenRes $ options $ st
-        (V2 newPosX newPosY) = (pos + velocity g) * V2 dt dt
+        (V2 newPosX newPosY) = pos + (velocity g) * V2 dt dt
         fixedX = max 0 $ min newPosX (fromIntegral (fst res) - 50)
         fixedY = max 0 $ min (fromIntegral (snd res) - 100) newPosY
      in P $ V2 fixedX fixedY
