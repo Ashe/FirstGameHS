@@ -16,6 +16,8 @@ import GameState
 import SDLAnimations
 import InputModule
 
+import Guy
+
 import Paths_FirstGameHS(getDataFileName)
 
 jumpVelocity :: V2 CDouble
@@ -26,14 +28,6 @@ walkingSpeed = V2 300 0
 
 gravity :: V2 CDouble
 gravity = V2 0 300
-
-updateWorld :: CDouble -> GameState -> GameState
-updateWorld delta state@(State (Options res _ _) (Guy (P pos) vel tag anim frame)) = 
-  let (V2 newPosX newPosY) =  pos + (gravity + vel) * V2 delta delta
-      fixedX = max 0 $ min newPosX (fromIntegral (fst res) - 50)
-      fixedY = max 0 $ min (fromIntegral (snd res) - 100) newPosY
-   in state {entities = Guy (P $ V2 fixedX fixedY) vel tag anim frame }
-
 
 -- Takes file and creates a texture out of it
 getTextureFromImg :: SDL.Renderer -> FilePath -> IO SDL.Texture
@@ -50,21 +44,23 @@ main = do
   SDL.initialize [SDL.InitVideo]
 
   -- Set up the first state
-  let jump state@(State _ oldGuy@(Guy _ curVel _ _ _)) = state { entities = oldGuy { velocity = curVel * V2 1 0 + jumpVelocity }}
-      fall state@(State _ oldGuy@(Guy _ curVel _ _ _)) = state { entities = oldGuy { velocity = curVel - jumpVelocity }}
-      right state@(State _ oldGuy@(Guy _ curVel _ _ _)) = state { entities = oldGuy { velocity = walkingSpeed + curVel }}
-      left state@(State _ oldGuy@(Guy _ curVel _ _ _)) = state { entities = oldGuy { velocity = curVel - walkingSpeed }}
+-- let jump p@(Guy _ curVel _ _) = p { velocity = curVel * V2 1 0 + jumpVelocity }
+--     fall p@(Guy _ curVel _ _) = p { velocity = curVel - jumpVelocity }
+--     right p@(Guy _ curVel _ _) = p { velocity = walkingSpeed + curVel }
+--     left p@(Guy _ curVel _ _) = p { velocity = curVel - walkingSpeed }
+--
+--     initOptions = initialOptions { keybindings = 
+--       addBatchBindings 
+--         [ ((SDL.KeycodeUp, True), Just (\s@(GameState _ es) -> s {entities = jump (head es) : tail es}))
+--         , ((SDL.KeycodeUp, False), Just fall)
+--         , ((SDL.KeycodeRight, True), Just right)
+--         , ((SDL.KeycodeRight, False), Just left)
+--         , ((SDL.KeycodeLeft, True), Just left)
+--         , ((SDL.KeycodeLeft, False), Just right)
+--         ] blankKeyBindings }
+--     state = initialState { options = initOptions }
 
-      initOptions = initialOptions { keybindings = 
-        addBatchBindings 
-          [ ((SDL.KeycodeUp, True), Just jump)
-          , ((SDL.KeycodeUp, False), Just fall)
-          , ((SDL.KeycodeRight, True), Just right)
-          , ((SDL.KeycodeRight, False), Just left)
-          , ((SDL.KeycodeLeft, True), Just left)
-          , ((SDL.KeycodeLeft, False), Just right)
-          ] blankKeyBindings }
-      state = initialState { options = initOptions }
+  let state = initialState
 
   -- Create a window with the correct screensize and make it appear
   window <- SDL.createWindow "FirstGameHS"
@@ -89,11 +85,10 @@ main = do
   animsList <- loadAnimations "Assets/rogue.json"
   let animationSet = getAnimationSet "rogue" "male" =<< animsList
       animation = getAnimation "walk" =<< animationSet
-      frame = fmap (getFrame 0) animation
       initAnimationState = 
         AnimationState animationSet animation [] "idle" 0 0
 
-  let loop lastTicks state animState = do
+  let loop lastTicks state = do
 
         ticks <- SDL.getTicks
         events <- SDL.pollEvents
@@ -104,22 +99,20 @@ main = do
 
         -- Update functions
         let worldAfterInput = foldl' processInput state payloads
-            newState        = updateWorld delta worldAfterInput
-            newAnimState    = updateAnimationState delta 0.1 animState
+            newState        = updateGameState worldAfterInput delta
 
         -- Render functions (Background and player)
         SDL.copy renderer texture Nothing Nothing
-        SDL.copy renderer player (getCurrentFrame newAnimState) $ Just $ SDL.Rectangle (truncate <$> position (entities newState)) (V2 100 100)
 
         -- Delay time until next frame to save processing power
         let frameDelay = 1000 / fromIntegral (frameLimit (options newState))
         when (delta < frameDelay) $ SDL.delay (truncate $ frameDelay - delta)
 
         SDL.present renderer
-        unless quit $ loop ticks newState newAnimState
+        unless quit $ loop ticks newState
 
   ticks <- SDL.getTicks
-  loop ticks state initAnimationState
+  loop ticks state
 
   SDL.destroyWindow window
   SDL.quit

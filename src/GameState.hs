@@ -5,6 +5,8 @@ module GameState
   , initialState
   , entities
   , options
+  , updateGameState
+  , renderGameState
   , initialOptions
   , screenRes
   , frameLimit
@@ -58,3 +60,12 @@ processEvent :: SDL.EventPayload -> Maybe (SDL.Keycode, Bool)
 processEvent (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Pressed False (SDL.Keysym _ code _))) = Just (code, True)
 processEvent (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Released _ (SDL.Keysym _ code _))) = Just (code, False)
 processEvent _ = Nothing
+
+-- Updates the game state's entities
+updateGameState :: GameState -> CDouble -> GameState
+updateGameState state delta = state { entities = map (\(Entity _ up _) -> up delta) (entities state)}
+
+-- Renders the game state's entities
+renderGameState :: GameState -> IO [()]
+renderGameState state = sequence $ map (\(Entity _ _ rend) -> rend) $ entities state
+-- SDL.copy renderer player (getCurrentFrame newAnimState) $ Just $ SDL.Rectangle (truncate <$> position (entities newState)) (V2 100 100)
