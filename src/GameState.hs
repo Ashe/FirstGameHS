@@ -1,10 +1,13 @@
 module GameState  
   ( GameState(State)
+  , Entity(Entity)
   , Options(Options)
   , KeyBindings
   , initialState
   , entities
   , options
+  , deltaTime
+  , elapsedTime
   , updateGameState
   , renderGameState
   , initialOptions
@@ -12,6 +15,9 @@ module GameState
   , frameLimit
   , keybindings
   , processInput
+  , eID
+  , update
+  , render
   ) where
 
 import Control.Monad
@@ -20,13 +26,21 @@ import SDL
 import qualified SDL
 
 import InputModule
-import Entity
 
 -- Hands the current state of the game to various functions
 data GameState = 
   State
-  { options   :: Options
-  , entities  :: [Entity]
+  { options     :: Options
+  , deltaTime   :: CDouble
+  , elapsedTime :: CDouble
+  , entities    :: [Entity]
+  }
+
+data Entity =
+  Entity
+  { eID       :: Int
+  , update    :: GameState -> Entity
+  , render    :: SDL.Renderer -> IO ()
   }
 
 -- We will need this later so just making a newtype for now
@@ -38,7 +52,7 @@ data Options =
     }
 
 initialState :: GameState
-initialState = State initialOptions []
+initialState = State initialOptions 0 0 []
 
 initialOptions :: Options
 initialOptions =
@@ -50,7 +64,7 @@ initialOptions =
 
 -- Change the gamestate with input
 processInput :: GameState -> SDL.EventPayload -> GameState
-processInput state@(State (Options _ _ kbs) _) input = exec $ join func
+processInput state@(State (Options _ _ kbs) _ _ _) input = exec $ join func
   where func = getBoundInput kbs <$> processEvent input
         exec (Just f) = f state
         exec _ = state
@@ -63,9 +77,13 @@ processEvent _ = Nothing
 
 -- Updates the game state's entities
 updateGameState :: GameState -> CDouble -> GameState
-updateGameState state delta = state { entities = map (\(Entity _ up _) -> up delta) (entities state)}
+updateGameState state delta = 
+  state 
+  { deltaTime = delta
+  , elapsedTime = elapsedTime state + delta
+  , entities = map (\(Entity _ up _) -> up state) (entities state)
+  }
 
 -- Renders the game state's entities
-renderGameState :: GameState -> IO [()]
-renderGameState state = sequence $ map (\(Entity _ _ rend) -> rend) $ entities state
--- SDL.copy renderer player (getCurrentFrame newAnimState) $ Just $ SDL.Rectangle (truncate <$> position (entities newState)) (V2 100 100)
+renderGameState :: GameState -> SDL.Renderer -> IO [()]
+renderGameState state renderer = sequence $ map (\(Entity _ _ rend) -> rend renderer) $ entities state

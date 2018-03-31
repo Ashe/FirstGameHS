@@ -4,7 +4,7 @@ module Guy
   ( Guy(Guy)
   , position
   , velocity
-  , tag
+  , texture
   , animation
   , guy
   , updateGuy
@@ -15,43 +15,41 @@ import Foreign.C.Types
 import SDL.Vect
 import qualified SDL
 
-import Entity
+import GameState
 import SDLAnimations
 
  -- The fundamental structures of all our objects in the game
 data Guy =
  Guy
- { position :: V2 CDouble
+ { position :: Point V2 CDouble
  , velocity :: V2 CDouble
- , tag :: String
+ , texture  :: SDL.Texture
  , animation :: AnimationState
- } deriving (Show)
+ }
 
 guy :: Guy -> Int -> Entity
 guy g i = 
   Entity
   { eID       = i
   , update    = flip guy i . updateGuy g
-  , render    = print (i)
+  , render    = renderGuy g
   }
 
-updateGuy :: Guy -> CDouble -> Guy
-updateGuy guy dt = 
-  guy
+updateGuy :: Guy -> GameState -> Guy
+updateGuy g st = 
+  g
   { position =
-    let (V2 newPosX newPosY) = position guy + velocity guy * V2 dt dt
-     in V2 newPosX newPosY
-  , animation = updateAnimationState dt 0.1 (animation guy)
+    let (P pos) = position g
+        res = screenRes $ options $ st
+        (V2 newPosX newPosY) = (pos + velocity g) * V2 dt dt
+        fixedX = max 0 $ min newPosX (fromIntegral (fst res) - 50)
+        fixedY = max 0 $ min (fromIntegral (snd res) - 100) newPosY
+     in P $ V2 fixedX fixedY
+  , animation = updateAnimationState dt 0.1 (animation g)
   }
+  where dt = deltaTime st
 
--- -- Our initial guy starts out with him roughly in the middle
--- initialGuy :: (CDouble, CDouble) -> Entity
--- initialGuy pos =
---     Entity
---     { position = P $ V2 (fst pos) (snd pos)
---     , velocity = V2 0 0
---     , tag = "male"
---     , animation = "idle"
---     , frame = 0
---     }
-
+renderGuy :: Guy -> SDL.Renderer -> IO ()
+renderGuy g renderer = 
+  SDL.copy renderer (texture g) (getCurrentFrame (animation g)) $ Just $ SDL.Rectangle (truncate <$> position g) (V2 100 100)
+-- SDL.copy renderer player (getCurrentFrame newAnimState) $ Just $ SDL.Rectangle (truncate <$> position (entities newState)) (V2 100 100)
