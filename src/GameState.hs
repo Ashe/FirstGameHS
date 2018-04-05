@@ -1,22 +1,19 @@
 module GameState  
   ( GameState(State)
-  , Entity(Entity)
   , Options(Options)
   , KeyBindings
   , initialState
   , entities
+  , renderer
   , options
   , deltaTime
   , elapsedTime
-  , updateGameState
   , renderGameState
   , initialOptions
   , screenRes
   , frameLimit
   , keybindings
   , processInput
-  , eID
-  , update
   , render
   ) where
 
@@ -26,6 +23,7 @@ import SDL
 import qualified SDL
 
 import InputModule
+import Guy
 
 -- Hands the current state of the game to various functions
 data GameState = 
@@ -33,14 +31,8 @@ data GameState =
   { options     :: Options
   , deltaTime   :: CDouble
   , elapsedTime :: CDouble
-  , entities    :: [Entity]
-  }
-
-data Entity =
-  Entity
-  { eID       :: Int
-  , update    :: GameState -> Entity
-  , render    :: SDL.Renderer -> IO ()
+  , entities    :: [Guy]
+  , renderer    :: SDL.Renderer
   }
 
 -- We will need this later so just making a newtype for now
@@ -51,8 +43,8 @@ data Options =
     , keybindings :: KeyBindings GameState
     }
 
-initialState :: GameState
-initialState = State initialOptions 0 0 []
+initialState :: SDL.Renderer -> GameState
+initialState r = State initialOptions 0 0 [] r
 
 initialOptions :: Options
 initialOptions =
@@ -64,7 +56,7 @@ initialOptions =
 
 -- Change the gamestate with input
 processInput :: GameState -> SDL.EventPayload -> GameState
-processInput state@(State (Options _ _ kbs) _ _ _) input = exec $ join func
+processInput state@(State (Options _ _ kbs) _ _ _ _) input = exec $ join func
   where func = getBoundInput kbs <$> processEvent input
         exec (Just f) = f state
         exec _ = state
@@ -75,15 +67,6 @@ processEvent (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Pressed False (SDL.
 processEvent (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Released _ (SDL.Keysym _ code _))) = Just (code, False)
 processEvent _ = Nothing
 
--- Updates the game state's entities
-updateGameState :: GameState -> CDouble -> GameState
-updateGameState state delta = 
-  state 
-  { deltaTime = delta
-  , elapsedTime = elapsedTime state + delta
-  , entities = map (\(Entity _ up _) -> up state) (entities state)
-  }
-
 -- Renders the game state's entities
-renderGameState :: GameState -> SDL.Renderer -> IO [()]
-renderGameState state renderer = sequence $ map (\(Entity _ _ rend) -> rend renderer) $ entities state
+renderGameState :: GameState -> IO [()]
+renderGameState state@(State _ _ _ _ renderer) = sequence $ map (\g -> render g $ renderer) $ entities state

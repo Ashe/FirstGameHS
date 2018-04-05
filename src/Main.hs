@@ -12,6 +12,9 @@ import Data.List (foldl')
 import SDL.Raw.Timer as SDL hiding (delay)
 import Text.Pretty.Simple
 
+import Reactive.Banana
+import Reactive.Banana.Frameworks
+
 import GameState
 import SDLAnimations
 import InputModule
@@ -45,6 +48,7 @@ main = do
 
   -- Create a window with the correct screensize and make it appear
   window <- SDL.createWindow "FirstGameHS" SDL.defaultWindow 
+  let quitApplication = SDL.destroyWindow window >> SDL.quit
 
   -- Create a renderer for the window for rendering textures
   renderer <-
@@ -56,7 +60,7 @@ main = do
         , SDL.rendererTargetTexture = False
         }
 
-  -- Set up the first state
+-- -- Set up the first state
 -- let jump p@(Guy _ curVel _ _) = p { velocity = curVel * V2 1 0 + jumpVelocity }
 --     fall p@(Guy _ curVel _ _) = p { velocity = curVel - jumpVelocity }
 --     right p@(Guy _ curVel _ _) = p { velocity = walkingSpeed + curVel }
@@ -64,12 +68,12 @@ main = do
 --
 --     initOptions = initialOptions { keybindings = 
 --       addBatchBindings 
---         [ ((SDL.KeycodeUp, True), Just (\s@(GameState _ es) -> s {entities = jump (head es) : tail es}))
---         , ((SDL.KeycodeUp, False), Just fall)
---         , ((SDL.KeycodeRight, True), Just right)
---         , ((SDL.KeycodeRight, False), Just left)
---         , ((SDL.KeycodeLeft, True), Just left)
---         , ((SDL.KeycodeLeft, False), Just right)
+--         [ ((SDL.KeycodeUp, True), Just (entManip 0 jump))
+--         , ((SDL.KeycodeUp, False), Just (entManip 0 fall))
+--         , ((SDL.KeycodeRight, True), Just (entManip 0 right))
+--         , ((SDL.KeycodeRight, False), Just (entManip 0 left))
+--         , ((SDL.KeycodeLeft, True), Just (entManip 0 left))
+--         , ((SDL.KeycodeLeft, False), Just (entManip 0 right))
 --         ] blankKeyBindings }
 --     state = initialState { options = initOptions }
 
@@ -86,16 +90,10 @@ main = do
         AnimationState animationSet animation [] "idle" 0 0
 
       -- Create the player and add it to the entitylist
-      player = 
-        Guy
-          { position  = P $ V2 0 0
-          , velocity  = V2 15 15
-          , texture   = playerTexture
-          , animation = initAnimationState
-          }
+      player = createGuy 0 0 playerTexture initAnimationState
 
   -- Create the initial state and put the player in
-  let state = initialState { entities = [guy player 0]}
+  let state = (initialState renderer) { entities = [player]}
 
   -- Set the window size
   SDL.windowSize window $= uncurry V2 (screenRes (options state))
@@ -103,36 +101,33 @@ main = do
   -- Show the window
   SDL.showWindow window
 
-  -- Main game loop
-  let loop state previousTicks = do
-
-        ticks <- SDL.getTicks
-        events <- SDL.pollEvents
-
-        let delta = 0.001 * (fromIntegral ticks - fromIntegral previousTicks)
-            payloads = map SDL.eventPayload events
-            quit = SDL.QuitEvent `elem` payloads
-
-        -- Update functions
-        let worldAfterInput = foldl' processInput state payloads
-            newState        = updateGameState worldAfterInput delta
-
-        -- Render functions (Background and player)
-        SDL.copy renderer background Nothing Nothing
-
-        -- Render all entities
-        renderGameState newState renderer
-
-        -- Delay time until next frame to save processing power
-        let frameDelay = 1000 / fromIntegral (frameLimit (options newState))
-        when (delta < frameDelay) $ SDL.delay (truncate $ frameDelay - delta)
-
-        SDL.present renderer
-        unless quit $ loop newState ticks
-
   ticks <- SDL.getTicks
-  loop state ticks
+  mainLoop state ticks background
 
-  SDL.destroyWindow window
-  SDL.quit
+  quitApplication
 
+-- Main game loop
+mainLoop :: Integral a => GameState -> a -> SDL.Texture -> IO ()
+mainLoop state previousTicks bg = do
+  ticks <- SDL.getTicks
+  events <- SDL.pollEvents
+
+  let delta = 0.001 * (fromIntegral ticks - fromIntegral previousTicks)
+      payloads = map SDL.eventPayload events
+      quit = SDL.QuitEvent `elem` payloads
+
+  -- Update functions
+  let newState = foldl' processInput state payloads
+
+  -- Render functions (Background and player)
+  SDL.copy (renderer newState) bg Nothing Nothing
+
+  -- Render all entities
+  renderGameState newState
+
+  -- Delay time until next frame to save processing power
+  let frameDelay = 1000 / fromIntegral (frameLimit (options newState))
+  when (delta < frameDelay) $ SDL.delay (truncate $ frameDelay - delta)
+
+  SDL.present $ renderer newState
+  unless quit $ mainLoop newState ticks bg

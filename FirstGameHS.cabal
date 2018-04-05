@@ -23,6 +23,7 @@ executable FirstGameHS
   build-depends:        base >= 4.7 && < 5
                         , sdl2
                         , sdl2-image
+                        , reactive-banana
                         , pretty-simple
                         , directory
                         , containers
@@ -31,7 +32,7 @@ executable FirstGameHS
                         , bytestring
   other-modules:        Paths_FirstGameHS
                         , GameState
-                        , Entity
                         , SDLAnimations
                         , AnimationLoader
                         , InputModule
+                        , Guy

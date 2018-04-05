@@ -1,12 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternSynonyms #-}
 module Guy 
-  ( Guy(Guy)
+  ( Guy()
+  , createGuy
   , position
   , velocity
   , texture
   , animation
-  , guy
+  , render
   , updateGuy
   ) where
 
@@ -15,41 +16,40 @@ import Foreign.C.Types
 import SDL.Vect
 import qualified SDL
 
-import GameState
 import SDLAnimations
 
  -- The fundamental structures of all our objects in the game
 data Guy =
  Guy
- { position :: Point V2 CDouble
- , velocity :: V2 CDouble
- , texture  :: SDL.Texture
- , animation :: AnimationState
+ { position   :: Point V2 CDouble
+ , velocity   :: V2 CDouble
+ , texture    :: SDL.Texture
+ , animation  :: AnimationState
+ , render     :: SDL.Renderer -> IO ()
  }
 
-guy :: Guy -> Int -> Entity
-guy g i = 
-  Entity
-  { eID       = i
-  , update    = flip guy i . updateGuy g
-  , render    = renderGuy g
-  }
+createGuy x y tex anim =
+        Guy
+          { position  = P $ V2 x y
+          , velocity  = V2 0 0
+          , texture   = tex
+          , animation = anim
+          , render = renderGuy $ createGuy x y tex anim
+          }
 
-updateGuy :: Guy -> GameState -> Guy
-updateGuy g st = 
+-- Update the guy's position and location
+updateGuy :: Guy -> CDouble -> Guy
+updateGuy g dt = 
   g
   { position =
     let (P pos) = position g
-        res = screenRes $ options $ st
         (V2 newPosX newPosY) = pos + (velocity g) * V2 dt dt
-        fixedX = max 0 $ min newPosX (fromIntegral (fst res) - 50)
-        fixedY = max 0 $ min (fromIntegral (snd res) - 100) newPosY
-     in P $ V2 fixedX fixedY
+     in P $ V2 newPosX newPosY
   , animation = updateAnimationState dt 0.1 (animation g)
+  , render = renderGuy g
   }
-  where dt = deltaTime st
 
+-- Render the guy
 renderGuy :: Guy -> SDL.Renderer -> IO ()
 renderGuy g renderer = 
   SDL.copy renderer (texture g) (getCurrentFrame (animation g)) $ Just $ SDL.Rectangle (truncate <$> position g) (V2 100 100)
--- SDL.copy renderer player (getCurrentFrame newAnimState) $ Just $ SDL.Rectangle (truncate <$> position (entities newState)) (V2 100 100)
