@@ -103,13 +103,13 @@ main = do
 
   ticks <- SDL.getTicks
   
-  gameLoop 165 state
+  gameLoop state
 
   quitApplication
 
 -- Main game loop
-gameLoop :: Int -> GameState -> IO ()
-gameLoop frameLimit gs = do
+gameLoop :: GameState -> IO ()
+gameLoop gs = do
 
   -- Event network
   (tickH, tickF) <- newAddHandler
@@ -133,7 +133,7 @@ gameLoop frameLimit gs = do
         let delta = 0.001 * (fromIntegral ticks - fromIntegral prevTicks)
             payloads = map SDL.eventPayload events
             quit = SDL.QuitEvent `elem` payloads
-            frameDelay = 1000 / fromIntegral frameLimit
+            frameDelay = 1000 / fromIntegral (frameLimit (options gs))
         
         mouseF =<< SDL.getAbsoluteMouseLocation
         tickF delta
