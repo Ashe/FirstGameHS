@@ -102,7 +102,8 @@ main = do
   SDL.showWindow window
 
   ticks <- SDL.getTicks
-  mainLoop state ticks background
+  --mainLoop state ticks background
+  gameLoop 165
 
   quitApplication
 
@@ -111,6 +112,9 @@ mainLoop :: Integral a => GameState -> a -> SDL.Texture -> IO ()
 mainLoop state previousTicks bg = do
   ticks <- SDL.getTicks
   events <- SDL.pollEvents
+  mouseLocation <- SDL.getAbsoluteMouseLocation
+
+  print mouseLocation
 
   let delta = 0.001 * (fromIntegral ticks - fromIntegral previousTicks)
       payloads = map SDL.eventPayload events
@@ -131,3 +135,34 @@ mainLoop state previousTicks bg = do
 
   SDL.present $ renderer newState
   unless quit $ mainLoop newState ticks bg
+
+
+gameLoop :: Int -> IO ()
+gameLoop frameLimit = do
+  -- Event network
+  (tickH, tickF) <- newAddHandler
+  (mouseH, mouseF) <- newAddHandler
+
+  -- Compile the event network
+  network <- compile $ do 
+    mouseB <- newBehavior (SDL.getAbsoluteMouseLocation :: IO (Point V2 CInt))
+    getM <- fromAddHandler tickH
+    reactimate $ fmap (print =<<) $ fst mouseB <@ getM
+  actuate network
+
+  let loop prevTicks = do
+        events <- SDL.pollEvents
+        ticks <- SDL.getTicks
+        
+        let delta = 0.001 * (fromIntegral ticks - fromIntegral prevTicks)
+            payloads = map SDL.eventPayload events
+            quit = SDL.QuitEvent `elem` payloads
+            frameDelay = 1000 / fromIntegral frameLimit
+
+        tickF ()
+
+        -- Delay time until next frame to save processing power
+        when (delta < frameDelay) $ SDL.delay (truncate $ frameDelay - delta)
+        if quit then pure () else loop ticks
+
+  loop =<< SDL.getTicks
