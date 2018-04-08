@@ -15,6 +15,7 @@ module GameState
   , keybindings
   , processInput
   , render
+  , texmex
   ) where
 
 import Control.Monad
@@ -33,6 +34,7 @@ data GameState =
   , elapsedTime :: CDouble
   , entities    :: [Guy]
   , renderer    :: SDL.Renderer
+  , texmex      :: SDL.Texture
   }
 
 -- We will need this later so just making a newtype for now
@@ -43,8 +45,8 @@ data Options =
     , keybindings :: KeyBindings GameState
     }
 
-initialState :: SDL.Renderer -> GameState
-initialState r = State initialOptions 0 0 [] r
+initialState :: SDL.Renderer -> SDL.Texture -> GameState
+initialState = State initialOptions 0 0 []
 
 initialOptions :: Options
 initialOptions =
@@ -56,7 +58,7 @@ initialOptions =
 
 -- Change the gamestate with input
 processInput :: GameState -> SDL.EventPayload -> GameState
-processInput state@(State (Options _ _ kbs) _ _ _ _) input = exec $ join func
+processInput state@(State (Options _ _ kbs) _ _ _ _ _) input = exec $ join func
   where func = getBoundInput kbs <$> processEvent input
         exec (Just f) = f state
         exec _ = state
@@ -68,5 +70,7 @@ processEvent (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Released _ (SDL.Key
 processEvent _ = Nothing
 
 -- Renders the game state's entities
-renderGameState :: GameState -> IO [()]
-renderGameState state@(State _ _ _ _ renderer) = sequence $ map (\g -> render g $ renderer) $ entities state
+renderGameState :: GameState -> IO ()
+renderGameState state@(State _ _ _ _ r texMex) = 
+  SDL.copy r texMex Nothing Nothing
+    <* mapM (`render` r) (entities state)

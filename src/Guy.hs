@@ -1,4 +1,3 @@
-{-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternSynonyms #-}
 module Guy 
   ( Guy()
@@ -43,7 +42,7 @@ updateGuy g dt =
   g
   { position =
     let (P pos) = position g
-        (V2 newPosX newPosY) = pos + (velocity g) * V2 dt dt
+        (V2 newPosX newPosY) = pos + velocity g * V2 dt dt
      in P $ V2 newPosX newPosY
   , animation = updateAnimationState dt 0.1 (animation g)
   , render = renderGuy g

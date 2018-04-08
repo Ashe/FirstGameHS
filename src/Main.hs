@@ -93,7 +93,7 @@ main = do
       player = createGuy 0 0 playerTexture initAnimationState
 
   -- Create the initial state and put the player in
-  let state = (initialState renderer) { entities = [player]}
+  let state = (initialState renderer background) { entities = [player]}
 
   -- Set the window size
   SDL.windowSize window $= uncurry V2 (screenRes (options state))
@@ -102,52 +102,28 @@ main = do
   SDL.showWindow window
 
   ticks <- SDL.getTicks
-  --mainLoop state ticks background
-  gameLoop 165
+  
+  gameLoop 165 state
 
   quitApplication
 
 -- Main game loop
-mainLoop :: Integral a => GameState -> a -> SDL.Texture -> IO ()
-mainLoop state previousTicks bg = do
-  ticks <- SDL.getTicks
-  events <- SDL.pollEvents
-  mouseLocation <- SDL.getAbsoluteMouseLocation
+gameLoop :: Int -> GameState -> IO ()
+gameLoop frameLimit gs = do
 
-  print mouseLocation
-
-  let delta = 0.001 * (fromIntegral ticks - fromIntegral previousTicks)
-      payloads = map SDL.eventPayload events
-      quit = SDL.QuitEvent `elem` payloads
-
-  -- Update functions
-  let newState = foldl' processInput state payloads
-
-  -- Render functions (Background and player)
-  SDL.copy (renderer newState) bg Nothing Nothing
-
-  -- Render all entities
-  renderGameState newState
-
-  -- Delay time until next frame to save processing power
-  let frameDelay = 1000 / fromIntegral (frameLimit (options newState))
-  when (delta < frameDelay) $ SDL.delay (truncate $ frameDelay - delta)
-
-  SDL.present $ renderer newState
-  unless quit $ mainLoop newState ticks bg
-
-
-gameLoop :: Int -> IO ()
-gameLoop frameLimit = do
   -- Event network
   (tickH, tickF) <- newAddHandler
   (mouseH, mouseF) <- newAddHandler
 
   -- Compile the event network
   network <- compile $ do 
-    mouseB <- newBehavior (SDL.getAbsoluteMouseLocation :: IO (Point V2 CInt))
-    getM <- fromAddHandler tickH
-    reactimate $ fmap (print =<<) $ fst mouseB <@ getM
+    tickEv <- fromAddHandler tickH
+    mouseB <- fromChanges (P $ V2 0 0) mouseH
+    
+    -- On every tick, print the mouse's position
+    reactimate $ renderGameState gs <$ tickEv
+    reactimate $ fmap print $ mouseB <@ tickEv
+
   actuate network
 
   let loop prevTicks = do
@@ -158,8 +134,10 @@ gameLoop frameLimit = do
             payloads = map SDL.eventPayload events
             quit = SDL.QuitEvent `elem` payloads
             frameDelay = 1000 / fromIntegral frameLimit
-
-        tickF ()
+        
+        mouseF =<< SDL.getAbsoluteMouseLocation
+        tickF delta
+        SDL.present $ renderer gs
 
         -- Delay time until next frame to save processing power
         when (delta < frameDelay) $ SDL.delay (truncate $ frameDelay - delta)
