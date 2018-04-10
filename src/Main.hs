@@ -12,8 +12,7 @@ import Data.List (foldl')
 import SDL.Raw.Timer as SDL hiding (delay)
 import Text.Pretty.Simple
 
-import Reactive.Banana
-import Reactive.Banana.Frameworks
+import Reflex
 
 import GameState
 import SDLAnimations
@@ -111,20 +110,20 @@ main = do
 gameLoop :: GameState -> IO ()
 gameLoop gs = do
 
-  -- Event network
-  (tickH, tickF) <- newAddHandler
-  (mouseH, mouseF) <- newAddHandler
+-- -- Event network
+-- (tickH, tickF) <- newAddHandler
+-- (mouseH, mouseF) <- newAddHandler
+--
+-- -- Compile the event network
+-- network <- compile $ do 
+--   tickEv <- fromAddHandler tickH
+--   mouseB <- fromChanges (P $ V2 0 0) mouseH
+--   
+--   -- On every tick, print the mouse's position
+--   reactimate $ renderGameState gs <$ tickEv
+--   reactimate $ fmap print $ mouseB <@ tickEv
 
-  -- Compile the event network
-  network <- compile $ do 
-    tickEv <- fromAddHandler tickH
-    mouseB <- fromChanges (P $ V2 0 0) mouseH
-    
-    -- On every tick, print the mouse's position
-    reactimate $ renderGameState gs <$ tickEv
-    reactimate $ fmap print $ mouseB <@ tickEv
-
-  actuate network
+-- actuate network
 
   let loop prevTicks = do
         events <- SDL.pollEvents
@@ -135,8 +134,8 @@ gameLoop gs = do
             quit = SDL.QuitEvent `elem` payloads
             frameDelay = 1000 / fromIntegral (frameLimit (options gs))
         
-        mouseF =<< SDL.getAbsoluteMouseLocation
-        tickF delta
+--       mouseF =<< SDL.getAbsoluteMouseLocation
+--       tickF delta
         SDL.present $ renderer gs
 
         -- Delay time until next frame to save processing power
