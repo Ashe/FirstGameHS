@@ -30,6 +30,7 @@ executable FirstGameHS
                         , aeson-pretty
                         , bytestring
                         , reflex
+                        , reflex-sdl2
   other-modules:        Paths_FirstGameHS
                         , GameState
                         , SDLAnimations

@@ -1,5 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE PatternSynonyms #-}
+
+{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE LambdaCase            #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE ScopedTypeVariables   #-}
+{-# LANGUAGE TypeFamilies          #-}
+{-# LANGUAGE UndecidableInstances  #-}
+
 module Main where
 
 import Control.Monad
@@ -9,10 +17,13 @@ import SDL (($=))
 import qualified SDL
 import qualified SDL.Image
 import Data.List (foldl')
-import SDL.Raw.Timer as SDL hiding (delay)
+import SDL.Raw.Timer as SDL
 import Text.Pretty.Simple
+import Control.Concurrent (threadDelay)
+import System.Exit (exitSuccess)
 
 import Reflex
+import Reflex.SDL2
 
 import GameState
 import SDLAnimations
@@ -22,15 +33,6 @@ import Guy
 
 import Paths_FirstGameHS(getDataFileName)
 
-jumpVelocity :: V2 CDouble
-jumpVelocity = V2 0 (-800)
-
-walkingSpeed :: V2 CDouble
-walkingSpeed = V2 300 0
-
-gravity :: V2 CDouble
-gravity = V2 0 300
-
 -- Takes file and creates a texture out of it
 getTextureFromImg :: SDL.Renderer -> FilePath -> IO SDL.Texture
 getTextureFromImg renderer img = do
@@ -38,6 +40,209 @@ getTextureFromImg renderer img = do
   texture <- SDL.createTextureFromSurface renderer surface
   SDL.freeSurface surface
   pure texture
+
+--------------------------------------------------------------------------------
+-- | An axis aligned bounding box.
+data AABB = AABB InputMotion (V2 Int)
+
+
+--------------------------------------------------------------------------------
+-- | Convert a mouse button to an AABB.
+mouseButtonToAABB :: MouseButtonEventData -> AABB
+mouseButtonToAABB dat = AABB (mouseButtonEventMotion dat) pos
+  where P pos32 = mouseButtonEventPos dat
+        pos = fromIntegral <$> pos32
+
+
+--------------------------------------------------------------------------------
+-- | Convert a mouse button motion to color.
+motionToColor :: InputMotion -> V4 Int
+motionToColor Released = V4 255 0 0   128
+motionToColor Pressed  = V4 0   0 255 128
+
+
+--------------------------------------------------------------------------------
+-- | Renders an AABB using the handy SDL 2d 'Renderer'.
+renderAABB :: MonadIO m => Renderer -> V4 Int -> V2 Int -> m ()
+renderAABB r color pos = do
+  rendererDrawColor r $= (fromIntegral <$> color)
+  fillRect r $ Just $ Rectangle (P $ fromIntegral <$> pos - 10) 20
+
+
+-------------------------------------------------------------------------------
+-- | A type representing one layer in our app.
+type Layer m = Performable m ()
+
+
+----------------------------------------------------------------------
+-- | Commit a layer stack that changes over time.
+commitLayers :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m)
+      => Dynamic t [Layer m] -> m ()
+commitLayers = tellDyn
+
+
+----------------------------------------------------------------------
+-- | Commit one layer that changes over time.
+commitLayer :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m)
+            => Dynamic t (Layer m) -> m ()
+commitLayer = tellDyn . fmap pure
+
+
+ffor2 :: Reflex t => Dynamic t a -> Dynamic t b -> (a -> b -> c) -> Dynamic t c
+ffor2 a b f = zipDynWith f a b
+
+ffor2up
+  :: Reflex t => Dynamic t a -> Dynamic t b1 -> ((a, b1) -> b) -> Dynamic t b
+ffor2up a b = ffor (zipDyn a b)
+
+
+data ButtonState = ButtonStateUp
+                 | ButtonStateOver
+                 | ButtonStateDown
+                 deriving Eq
+
+
+buttonState :: Bool -> Bool -> ButtonState
+buttonState isInside isDown
+  | not isInside = ButtonStateUp
+  | isDown       = ButtonStateDown
+  | otherwise    = ButtonStateOver
+
+
+button :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m)
+       => Renderer
+       -> m (Event t ButtonState)
+button r = do
+  evMotionData <- getMouseMotionEvent
+  let position = V2 100 100
+      size     = V2 100 100
+      V2 tlx tly = position
+      V2 brx bry = position + size
+      evMotionPos = fmap fromIntegral . mouseMotionEventPos <$> evMotionData
+      evMouseIsInside = ffor evMotionPos $ \(P (V2 x y)) ->
+        (x >= tlx && x <= brx) && (y >= tly && y <= bry)
+  dMouseIsInside <- holdDyn False evMouseIsInside
+
+  evBtn <- getMouseButtonEvent
+  let evBtnIsDown = ffor evBtn $ (== Pressed) . mouseButtonEventMotion
+  dButtonIsDown <- holdDyn False evBtnIsDown
+
+  let dButtonStatePre = buttonState <$> dMouseIsInside <*> dButtonIsDown
+  evPB         <- getPostBuild
+  dButtonState <- holdDyn ButtonStateUp $ leftmost [ updated dButtonStatePre
+                                                   , ButtonStateUp <$ evPB
+                                                   ]
+  commitLayer $ ffor dButtonState $ \st -> do
+    let color = case st of
+                  ButtonStateUp   -> V4 192 192 192 255
+                  ButtonStateOver -> 255
+                  ButtonStateDown -> V4 128 128 128 255
+    rendererDrawColor r $= color
+    fillRect r $ Just $ Rectangle (P position) size
+
+  updated <$> holdUniqDyn dButtonState
+
+
+guest :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => Window -> Renderer -> m () 
+guest window r = do
+  -- Print some stuff after the network is built.
+  evPB <- getPostBuild
+  performEvent_ $ ffor evPB $ \() ->
+    liftIO $ putStrLn "starting up..."
+  ------------------------------------------------------------------------------
+  -- Test async events.
+  -- This will wait three seconds before coloring the background black.
+  ------------------------------------------------------------------------------
+  evDelay <- getAsyncEventWithEventCode 0xBEEF $ threadDelay 3000000
+  dDelay  <- holdDyn False $ True <$ evDelay
+  commitLayers $ ffor dDelay $ \case
+    False -> pure $ do
+      rendererDrawColor r $= V4 128 128 128 255
+      fillRect r Nothing
+    True  -> pure $ do
+      rendererDrawColor r $= V4 0 0 0 255
+      fillRect r Nothing
+
+  ------------------------------------------------------------------------------
+  -- A button!
+  ------------------------------------------------------------------------------
+  evBtnState <- button r
+  let evBtnPressed = fmapMaybe (guard . (== ButtonStateDown)) evBtnState
+  performEvent_ $ ffor evBtnPressed $ const $ liftIO $ putStrLn "Button pressed!"
+
+  ------------------------------------------------------------------------------
+  -- Ghosty trail of squares
+  ------------------------------------------------------------------------------
+  -- Gather all mouse motion events into a list, then commit a commitLayers that
+  -- renders each move as a quarter alpha'd yello or cyan square.
+  evMouseMove <- getMouseMotionEvent
+  dMoves      <- foldDyn (\x xs -> take 100 $ x : xs) [] evMouseMove
+  commitLayer $ ffor dMoves $ \moves ->
+    forM_ (reverse moves) $ \dat -> do
+      let P pos = fromIntegral <$> mouseMotionEventPos dat
+          color = if null (mouseMotionEventState dat)
+                  then V4 255 255 0   128
+                  else V4 0   255 255 128
+      renderAABB r color pos
+
+  ------------------------------------------------------------------------------
+  -- Up and down squares
+  ------------------------------------------------------------------------------
+  -- Get any mouse button event and accumulate them as a list of
+  -- AABBs. Commit a commitLayers of those rendered up/down AABBs.
+  evMouseButton <- getMouseButtonEvent
+  dBtns         <- foldDyn (\x xs -> take 100 $ x : xs) [] evMouseButton
+  commitLayer $ ffor dBtns $ \btns ->
+    forM_ (reverse btns) $ \dat -> do
+      let AABB motion pos = mouseButtonToAABB dat
+          color = motionToColor motion
+      renderAABB r color pos
+
+  ------------------------------------------------------------------------------
+  -- An ephemeral commitLayers that only renders when a key is down, and only listens
+  -- to the tick event while that key is down.
+  -- This is an example of the higher-order nature of the reflex network. We
+  -- can update the shape of the network in response to events within it.
+  ------------------------------------------------------------------------------
+  evKey <- getKeyboardEvent
+  let evKeyNoRepeat = fmapMaybe (\k -> k <$ guard (not $ keyboardEventRepeat k)) evKey
+  dPressed <- holdDyn False $ ((== Pressed) . keyboardEventKeyMotion) <$> evKeyNoRepeat
+  void $ holdView (return ()) $ ffor (updated dPressed) $ \case
+    False -> return ()
+    True  -> do
+      evDeltaTick <- getDeltaTickEvent
+      dTimePressed <- foldDyn (+) 0 evDeltaTick
+      commitLayer $ ffor dTimePressed $ \t -> do
+        let wrap :: Float -> Int
+            wrap x = if x > 255 then wrap (x - 255) else floor x
+            rc    = wrap $ fromIntegral t/1000 * 255
+            gc    = wrap $ fromIntegral t/2000 * 255
+            bc    = wrap $ fromIntegral t/3000 * 255
+            color :: V4 Int
+            color = fromIntegral <$> V4 rc gc bc 255
+        renderAABB r color 100
+
+  ------------------------------------------------------------------------------
+  -- Test our recurring timer events
+  ------------------------------------------------------------------------------
+  let performDeltaSecondTimer n = do
+        evEverySecond  <- getRecurringTimerEventWithEventCode n $ fromIntegral n * 1000
+        dSeconds       <- foldDyn (+) (0 :: Int) $ 1 <$ evEverySecond
+        evSecondsDelta <- performEventDelta $ updated dSeconds
+        dSecondsDelta  <- holdDyn 0 evSecondsDelta
+        putDebugLnE (updated $ zipDynWith (,) dSeconds dSecondsDelta) $ (show n ++) . (": " ++) . show
+  performDeltaSecondTimer 1
+  performDeltaSecondTimer 2
+
+  ------------------------------------------------------------------------------
+  -- Quit on a quit event
+  ------------------------------------------------------------------------------
+  evQuit <- getQuitEvent
+  performEvent_ $ ffor evQuit $ \() -> liftIO $ do
+    putStrLn "bye!"
+    quit
+    destroyWindow window
+    exitSuccess
 
 main :: IO ()
 main = do
@@ -47,7 +252,6 @@ main = do
 
   -- Create a window with the correct screensize and make it appear
   window <- SDL.createWindow "FirstGameHS" SDL.defaultWindow 
-  let quitApplication = SDL.destroyWindow window >> SDL.quit
 
   -- Create a renderer for the window for rendering textures
   renderer <-
@@ -100,46 +304,10 @@ main = do
   -- Show the window
   SDL.showWindow window
 
-  ticks <- SDL.getTicks
-  
-  gameLoop state
-
-  quitApplication
-
--- Main game loop
-gameLoop :: GameState -> IO ()
-gameLoop gs = do
-
--- -- Event network
--- (tickH, tickF) <- newAddHandler
--- (mouseH, mouseF) <- newAddHandler
---
--- -- Compile the event network
--- network <- compile $ do 
---   tickEv <- fromAddHandler tickH
---   mouseB <- fromChanges (P $ V2 0 0) mouseH
---   
---   -- On every tick, print the mouse's position
---   reactimate $ renderGameState gs <$ tickEv
---   reactimate $ fmap print $ mouseB <@ tickEv
-
--- actuate network
-
-  let loop prevTicks = do
-        events <- SDL.pollEvents
-        ticks <- SDL.getTicks
-        
-        let delta = 0.001 * (fromIntegral ticks - fromIntegral prevTicks)
-            payloads = map SDL.eventPayload events
-            quit = SDL.QuitEvent `elem` payloads
-            frameDelay = 1000 / fromIntegral (frameLimit (options gs))
-        
---       mouseF =<< SDL.getAbsoluteMouseLocation
---       tickF delta
-        SDL.present $ renderer gs
-
-        -- Delay time until next frame to save processing power
-        when (delta < frameDelay) $ SDL.delay (truncate $ frameDelay - delta)
-        if quit then pure () else loop ticks
-
-  loop =<< SDL.getTicks
+  host () $ do
+    (_, dynLayers) <- runDynamicWriterT $ guest window renderer
+    performEvent_ $ ffor (updated dynLayers) $ \layers -> do
+      rendererDrawColor renderer $= V4 0 0 0 255
+      clear renderer
+      sequence_ layers
+      present renderer
