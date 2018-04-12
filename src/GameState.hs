@@ -14,11 +14,13 @@ module GameState
   , frameLimit
   , keybindings
   , processInput
+  , window
   , render
   , texmex
   ) where
 
-import Control.Monad
+import Control.Monad 
+import Control.Monad.IO.Class
 import Foreign.C.Types
 import SDL
 import qualified SDL
@@ -33,6 +35,7 @@ data GameState =
   , deltaTime   :: CDouble
   , elapsedTime :: CDouble
   , entities    :: [Guy]
+  , window      :: SDL.Window
   , renderer    :: SDL.Renderer
   , texmex      :: SDL.Texture
   }
@@ -45,7 +48,7 @@ data Options =
     , keybindings :: KeyBindings GameState
     }
 
-initialState :: SDL.Renderer -> SDL.Texture -> GameState
+initialState :: SDL.Window -> SDL.Renderer -> SDL.Texture -> GameState
 initialState = State initialOptions 0 0 []
 
 initialOptions :: Options
@@ -58,7 +61,7 @@ initialOptions =
 
 -- Change the gamestate with input
 processInput :: GameState -> SDL.EventPayload -> GameState
-processInput state@(State (Options _ _ kbs) _ _ _ _ _) input = exec $ join func
+processInput state@(State (Options _ _ kbs) _ _ _ _ _ _) input = exec $ join func
   where func = getBoundInput kbs <$> processEvent input
         exec (Just f) = f state
         exec _ = state
@@ -70,7 +73,7 @@ processEvent (SDL.KeyboardEvent (SDL.KeyboardEventData _ SDL.Released _ (SDL.Key
 processEvent _ = Nothing
 
 -- Renders the game state's entities
-renderGameState :: GameState -> IO ()
-renderGameState state@(State _ _ _ _ r texMex) = 
+renderGameState :: Control.Monad.IO.Class.MonadIO m => GameState -> m ()
+renderGameState state@(State _ _ _ _ _ r texMex) = liftIO $
   SDL.copy r texMex Nothing Nothing
     <* mapM (`render` r) (entities state)
