@@ -8,10 +8,10 @@
 {-# LANGUAGE DeriveGeneric #-}
 
 module AnimationLoader
-  ( AnimationSetData(AnimationSetData)
-  , AnimationData(AnimationData)
-  , Frame(Frame)
-  , JSONFile(JSONFile)
+  ( AnimationSetData(..)
+  , AnimationData(..)
+  , Frame(..)
+  , JSONFile(..)
   , getAnimationDataFromJSON
   , spitOutJSON
   ) where

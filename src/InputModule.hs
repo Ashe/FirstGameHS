@@ -3,7 +3,7 @@
 ---------------------------------------------------------
 
 module InputModule 
-  ( KeyBindings(KeyBindings)
+  ( KeyBindings (..)
   , addBinding
   , addBatchBindings
   , getBoundInput

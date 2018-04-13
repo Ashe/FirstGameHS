@@ -3,18 +3,10 @@
 -------------------------------------------------
 
 module GameSetup  
-  ( GameSetup(GameSetup)
-  , Options(Options)
-  , KeyBindings
+  ( GameSetup (..)
+  , Options (..)
   , initialSetup
-  , renderer
-  , options
-  , window
-  , texmex
   , initialOptions
-  , screenRes
-  , frameLimit
-  , keybindings
   ) where
 
 import Foreign.C.Types

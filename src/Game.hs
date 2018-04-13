@@ -5,8 +5,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 
 module Game
-( GameSetup(GameSetup)
-, game
+( game
 , beginGame
 ) where
 
@@ -20,25 +19,12 @@ import qualified SDL.Image
 import Reflex
 import Reflex.SDL2
 
+import Common
 import GameSetup
 import SDLAnimations
 import InputModule
 
 import Guy
-
--- A type representing one layer in our app.
-type Layer m = Performable m ()
-
-
--- Commit a layer stack that changes over time.
-commitLayers :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => Dynamic t [Layer m] -> m ()
-commitLayers = tellDyn
-
-
--- Commit one layer that changes over time.
-commitLayer :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => Dynamic t (Layer m) -> m ()
-commitLayer = tellDyn . fmap pure
-
 
 -- The main game loop
 game :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => GameSetup -> m () 

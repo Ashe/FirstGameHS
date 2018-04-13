@@ -1,10 +1,11 @@
 -- This module is responsible for taking animationData 
 -- and applying it into an SDL context
+------------------------------------------------------
 
 module SDLAnimations 
-  ( AnimationSet()
-  , Animation()
-  , AnimationState(AnimationState, currentAnimation, frameNumber, tickCount)
+  ( AnimationSet(..)
+  , Animation(..)
+  , AnimationState(..)
   , loadAnimations
   , getAnimationSet
   , getAnimation

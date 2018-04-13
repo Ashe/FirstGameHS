@@ -2,7 +2,7 @@
 -- that may need to be used anywhere
 -------------------------------------------------
 
-{-# LANGUAGE FlexibleContexts      #-}
+{-# LANGUAGE FlexibleContexts #-}
 
 module Common
 ( Layer

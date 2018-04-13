@@ -42,9 +42,6 @@ main = do
       initAnimationState = 
         AnimationState animationSet animation [] "idle" 0 0
 
-      -- Create the player and add it to the entitylist
-      -- player = createGuy 0 0 playerTexture initAnimationState
-
   -- Create the initial state and put the player in
   let setup = initialSetup window renderer background
 
