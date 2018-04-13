@@ -14,6 +14,7 @@ module SDLAnimations
   , getCurrentFrame
   ) where
 
+import Control.Monad.IO.Class
 import Foreign.C.Types
 import SDL.Vect
 import qualified SDL
@@ -49,8 +50,8 @@ data Animation =
     } deriving (Show)
 
 -- Export list of tuples of textures and clips
-loadAnimations :: FilePath -> IO (Maybe [AnimationSet])
-loadAnimations path = fmap (map convertToAnimationSet) <$> getAnimationDataFromJSON (JSONFile path)
+loadAnimations :: MonadIO m => FilePath -> m (Maybe [AnimationSet])
+loadAnimations path = liftIO $ fmap (map convertToAnimationSet) <$> getAnimationDataFromJSON (JSONFile path)
 
 -- Take some data and return a useful datatype
 convertToAnimationSet :: AnimationSetData -> AnimationSet

@@ -11,6 +11,7 @@ module Common
 , getTextureFromImg
 ) where
 
+import Control.Monad.IO.Class
 import qualified SDL
 import qualified SDL.Image
 
@@ -30,9 +31,9 @@ commitLayer :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => Dynamic t
 commitLayer = tellDyn . fmap pure
 
 -- Takes file and creates a texture out of it
-getTextureFromImg :: SDL.Renderer -> FilePath -> IO SDL.Texture
+getTextureFromImg :: MonadIO m => SDL.Renderer -> FilePath -> m SDL.Texture
 getTextureFromImg renderer img = do
-  surface <- SDL.Image.load =<< getDataFileName img
+  surface <- liftIO $ SDL.Image.load =<< getDataFileName img
   texture <- SDL.createTextureFromSurface renderer surface
   SDL.freeSurface surface
   pure texture

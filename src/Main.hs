@@ -34,14 +34,6 @@ main = do
   -- Load in the background
   background <- getTextureFromImg renderer "Assets/foo.bmp"
 
-  -- Load in the player's texture and animations
-  animsList <- loadAnimations "Assets/rogue.json"
-  playerTexture <- getTextureFromImg renderer "Assets/rogue.png"
-  let animationSet = getAnimationSet "rogue" "male" =<< animsList
-      animation = getAnimation "walk" =<< animationSet
-      initAnimationState = 
-        AnimationState animationSet animation [] "idle" 0 0
-
   -- Create the initial state and put the player in
   let setup = initialSetup window renderer background
 

@@ -28,23 +28,34 @@ import Guy
 
 -- The main game loop
 game :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => GameSetup -> m () 
-game gamestate = do
+game setup = do
 
   -- Create an event for every tick
-  delta <- holdDyn 0 =<< getDeltaTickEvent
+  tmp <- getDeltaTickEvent
+  delta <- holdDyn 0 (fmap ((/ 1000) .fromIntegral) tmp)
 
   -- Every tick sample the mouses current location
   mouseB <- hold (P $ V2 0 0) =<< performEvent (SDL.getAbsoluteMouseLocation <$ updated delta)
+
+  -- Create the player
+  animsList <- loadAnimations "Assets/rogue.json"
+  pTex <- getTextureFromImg (renderer setup) "Assets/rogue.png"
+  let animationSet = getAnimationSet "rogue" "male" =<< animsList
+      animation = getAnimation "walk" =<< animationSet
+      pAnimState = 
+        AnimationState animationSet animation [] "idle" 0 0
+  player <- handleGuy (updated delta) $ createGuy 0 0 pTex pAnimState
   
   -- Every tick, render the background and all entities
-  commitLayer $ ffor delta $ \_ -> SDL.copy (renderer gamestate) (texmex gamestate) Nothing Nothing
+  commitLayer $ ffor delta $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
+  commitLayer $ ffor delta $ \_ -> renderGuy (current player) (renderer setup)
   -- commitLayer $ ffor delta $ \_ -> renderGameState gamestate
 
   -- Quit on a quit event
   evQuit <- getQuitEvent
   performEvent_ $ ffor evQuit $ \() -> liftIO $ do
     SDL.quit
-    SDL.destroyWindow $ window gamestate
+    SDL.destroyWindow $ window setup
     exitSuccess
 
 -- Start the game loop properly
