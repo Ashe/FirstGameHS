@@ -32,7 +32,9 @@ executable FirstGameHS
                         , reflex
                         , reflex-sdl2
   other-modules:        Paths_FirstGameHS
-                        , GameState
+                        , Game
+                        , GameSetup
+                        , Common
                         , SDLAnimations
                         , AnimationLoader
                         , InputModule

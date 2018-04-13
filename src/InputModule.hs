@@ -1,4 +1,6 @@
 -- This module is responsible for handling input flexibly
+-- and provides the collection and functions for binding
+---------------------------------------------------------
 
 module InputModule 
   ( KeyBindings(KeyBindings)
@@ -9,8 +11,6 @@ module InputModule
   ) where
 
 import Control.Monad
-import Foreign.C.Types
-import SDL
 import qualified SDL
 
 import qualified Data.Map as Map

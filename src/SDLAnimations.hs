@@ -1,4 +1,5 @@
--- This module is responsible for taking animationData and applying it into an SDL context
+-- This module is responsible for taking animationData 
+-- and applying it into an SDL context
 
 module SDLAnimations 
   ( AnimationSet()
@@ -12,14 +13,8 @@ module SDLAnimations
   , getCurrentFrame
   ) where
 
-import Control.Monad
-import System.Directory
-import Data.List
-import Data.Monoid
-import Data.Functor
-import Data.Maybe
 import Foreign.C.Types
-import SDL
+import SDL.Vect
 import qualified SDL
 import qualified SDL.Image
 

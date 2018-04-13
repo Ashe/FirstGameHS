@@ -1,4 +1,6 @@
-{-# LANGUAGE PatternSynonyms #-}
+-- A character for the game
+---------------------------
+
 module Guy 
   ( Guy()
   , createGuy
@@ -10,7 +12,6 @@ module Guy
   , updateGuy
   ) where
 
-import Control.Monad
 import Foreign.C.Types
 import SDL.Vect
 import qualified SDL

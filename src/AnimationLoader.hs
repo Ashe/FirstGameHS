@@ -1,19 +1,21 @@
+-- This module is responsible for obtaining animation
+-- data out of JSON for modules that need it
+-- It also declares the types necessary to decode it 
+-- as well as an exemplary function
+----------------------------------------------------
+
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DeriveGeneric #-}
 
--- This module is responsible for animation data out of JSON for modules that need it
--- It also declares the types necessary to decode it as well as an exemplary function
+module AnimationLoader
+  ( AnimationSetData(AnimationSetData)
+  , AnimationData(AnimationData)
+  , Frame(Frame)
+  , JSONFile(JSONFile)
+  , getAnimationDataFromJSON
+  , spitOutJSON
+  ) where
 
-module AnimationLoader  ( AnimationSetData(AnimationSetData)
-                        , AnimationData(AnimationData)
-                        , Frame(Frame)
-                        , JSONFile(JSONFile)
-                        , getAnimationDataFromJSON
-                        , spitOutJSON )
-  where
-
-import Control.Monad
-import Control.Applicative ((<$>))
 import GHC.Generics
 import Data.Aeson
 import Data.Aeson.Encode.Pretty
