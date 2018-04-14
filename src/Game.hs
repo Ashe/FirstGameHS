@@ -45,11 +45,13 @@ game setup = do
       pAnimState = 
         AnimationState animationSet animation [] "idle" 0 0
   player <- handleGuy (updated delta) $ createGuy 0 0 pTex pAnimState
+  player' <- handleGuy (updated delta) $ createGuy 9 9 pTex pAnimState
+
+  
   
   -- Every tick, render the background and all entities
   commitLayer $ ffor delta $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
-  commitLayer $ ffor delta $ \_ -> renderGuy (current player) (renderer setup)
-  -- commitLayer $ ffor delta $ \_ -> renderGameState gamestate
+  performEvent_ $ fmap (renderGuys (renderer setup)) (foo [current player, current player'] (updated delta))
 
   -- Quit on a quit event
   evQuit <- getQuitEvent
@@ -70,3 +72,6 @@ beginGame gs =
       present r
   where w = window gs
         r = renderer gs
+
+foo :: Reflex t => [Behavior t a] -> Event t b -> Event t [a]
+foo gs ev = foldr (attachWith (:)) ([] <$ ev) gs

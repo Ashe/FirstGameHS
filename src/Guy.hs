@@ -8,9 +8,11 @@ module Guy
   , createGuy
   , updateGuy
   , renderGuy
+  , renderGuys
   , handleGuy
   ) where
 
+import Control.Monad
 import Control.Monad.IO.Class
 import Foreign.C.Types
 import SDL.Vect
@@ -51,14 +53,19 @@ updateGuy guy dt =
   , animation = updateAnimationState dt 0.1 (animation guy)
   }
 
+-- Render multiple guys
+renderGuys :: MonadIO m => SDL.Renderer -> [Guy] -> m ()
+renderGuys r = foldM (\_ g -> renderGuy r g) ()
+
 -- Render the guy
-renderGuy :: (MonadIO (Performable m), Monad m) => Behavior t Guy -> SDL.Renderer -> m ()
-renderGuy g renderer = do
-  s <- sample g
-  render s
-    where render g = SDL.copy renderer (texture g) 
-            (getCurrentFrame $ animation g) $ Just $ 
-            SDL.Rectangle (truncate <$> position g) (V2 100 100)
+printGuy :: MonadIO m => SDL.Renderer -> Guy -> m ()
+printGuy renderer g = liftIO . print $ position g
+
+renderGuy :: MonadIO m => SDL.Renderer -> Guy -> m ()
+renderGuy renderer g =
+  SDL.copy renderer (texture g)
+  (getCurrentFrame $ animation g) $ Just $ 
+  SDL.Rectangle (truncate <$> position g) (V2 100 100)
 
 handleGuy delta guy =
   foldDyn (flip updateGuy) guy delta

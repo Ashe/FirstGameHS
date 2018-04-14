@@ -19,7 +19,7 @@ import Reflex.SDL2
 
 import Paths_FirstGameHS(getDataFileName)
 
--- A type representing one layer in our app.
+-- A type representing one layer in the game
 type Layer m = Performable m ()
 
 -- Commit a layer stack that changes over time.
