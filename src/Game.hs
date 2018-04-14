@@ -47,11 +47,26 @@ game setup = do
   player <- handleGuy (updated delta) $ createGuy 0 0 pTex pAnimState
   player' <- handleGuy (updated delta) $ createGuy 9 9 pTex pAnimState
 
-  
-  
   -- Every tick, render the background and all entities
+
+  -- Render background. Works and compiles
   commitLayer $ ffor delta $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
+
+  -- Prints "Test print" every frame. Works and compiles
+  commitLayer $ ffor delta $ const testPrint
+  
+  -- Should render the background. Does NOT work but compiles
+  performEvent_ $ ffor (updated delta) $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
+
+  -- Should render characters to the screen. Does NOT work but compiles
   performEvent_ $ fmap (renderGuys (renderer setup)) (foo [current player, current player'] (updated delta))
+
+  -- Should print "Test print" every frame. Works and compiles.
+  performEvent_ $ fmap (const testPrint) (updated delta)
+
+  -- Trying to render the characters the same way as I render the background, but does NOT compile
+  -- This is due to foo producing Events rather than dynamics
+  --commitLayer $ fmap (renderGuys (renderer setup)) (foo [current player, current player'] (updated delta))
 
   -- Quit on a quit event
   evQuit <- getQuitEvent
@@ -75,3 +90,6 @@ beginGame gs =
 
 foo :: Reflex t => [Behavior t a] -> Event t b -> Event t [a]
 foo gs ev = foldr (attachWith (:)) ([] <$ ev) gs
+
+testPrint :: MonadIO m => m ()
+testPrint = liftIO $ print "Test print"

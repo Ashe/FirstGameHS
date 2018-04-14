@@ -57,10 +57,11 @@ updateGuy guy dt =
 renderGuys :: MonadIO m => SDL.Renderer -> [Guy] -> m ()
 renderGuys r = foldM (\_ g -> renderGuy r g) ()
 
--- Render the guy
-printGuy :: MonadIO m => SDL.Renderer -> Guy -> m ()
-printGuy renderer g = liftIO . print $ position g
+-- Print the guy to the terminal
+printGuy :: MonadIO m => Guy -> m ()
+printGuy g = liftIO . print $ position g
 
+-- Render the guy
 renderGuy :: MonadIO m => SDL.Renderer -> Guy -> m ()
 renderGuy renderer g =
   SDL.copy renderer (texture g)
