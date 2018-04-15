@@ -71,7 +71,7 @@ createTime limit = Time 0 0 0 limit True
 updateTime :: (Word32, Word32) -> Time -> Time
 updateTime (lim, d) time =
   time
-    { delta = fromIntegral (elapsed time) / 1000
+    { delta = fromIntegral (acc time) / 1000
     , elapsed = elapsed time + d
     , acc = fst check
     , limit = limit time
