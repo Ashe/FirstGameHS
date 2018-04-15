@@ -8,11 +8,10 @@ module Guy
   , createGuy
   , updateGuy
   , renderGuy
-  , renderGuys
   , handleGuy
   ) where
 
-import Control.Monad
+import Control.Monad.Fix
 import Control.Monad.IO.Class
 import Foreign.C.Types
 import SDL.Vect
@@ -53,10 +52,6 @@ updateGuy guy dt =
   , animation = updateAnimationState dt 0.1 (animation guy)
   }
 
--- Render multiple guys
-renderGuys :: MonadIO m => SDL.Renderer -> [Guy] -> m ()
-renderGuys r = foldM (\_ g -> renderGuy r g) ()
-
 -- Print the guy to the terminal
 printGuy :: MonadIO m => Guy -> m ()
 printGuy g = liftIO . print $ position g
@@ -68,5 +63,7 @@ renderGuy renderer g =
   (getCurrentFrame $ animation g) $ Just $ 
   SDL.Rectangle (truncate <$> position g) (V2 100 100)
 
-handleGuy delta guy =
-  foldDyn (flip updateGuy) guy delta
+-- Creates a dynamic from a guy
+handleGuy :: (MonadFix m, MonadHold t m, Reflex t) => 
+  Event t CDouble -> Guy -> m (Dynamic t Guy)
+handleGuy delta guy = foldDyn (flip updateGuy) guy delta

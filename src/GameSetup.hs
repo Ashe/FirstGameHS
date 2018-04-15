@@ -9,6 +9,7 @@ module GameSetup
   , initialOptions
   ) where
 
+import GHC.Word(Word32)
 import Foreign.C.Types
 import qualified SDL
 
@@ -27,7 +28,7 @@ data GameSetup =
 data Options = 
   Options 
     { screenRes   :: (CInt, CInt)
-    , frameLimit  :: Int
+    , frameLimit  :: Word32
     , keybindings :: KeyBindings GameSetup
     }
 

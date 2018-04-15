@@ -6,16 +6,27 @@
 
 module Common
 ( Layer
+, Time(..)
 , commitLayer
 , commitLayers
+, renderEntities
 , getTextureFromImg
+, updateTime
+, createTime
 ) where
 
+import Control.Monad
+import Control.Applicative
 import Control.Monad.IO.Class
+import GHC.Word(Word32)
+import Foreign.C.Types
 import qualified SDL
 import qualified SDL.Image
 
+import Reflex
 import Reflex.SDL2
+
+import qualified Debug.Trace 
 
 import Paths_FirstGameHS(getDataFileName)
 
@@ -37,3 +48,37 @@ getTextureFromImg renderer img = do
   texture <- SDL.createTextureFromSurface renderer surface
   SDL.freeSurface surface
   pure texture
+
+-- Render multiple entities
+renderEntities :: (Monad m, MonadIO mIO) => (a -> mIO ()) -> [m a] -> m (mIO ())
+renderEntities f l = foldM (\_ g -> f g) () <$> sequence l
+
+-- Data for containing time values
+data Time =
+  Time
+  { delta     :: CDouble
+  , elapsed   :: Word32
+  , acc       :: Word32
+  , limit     :: Word32
+  , nextFrame :: Bool
+  }
+
+-- Easy way to create a Time
+createTime :: Word32 -> Time
+createTime limit = Time 0 0 0 limit True
+
+-- Update the time with the time since previous frame
+updateTime :: (Word32, Word32) -> Time -> Time
+updateTime (lim, d) time =
+  time
+    { delta = fromIntegral (elapsed time) / 1000
+    , elapsed = elapsed time + d
+    , acc = fst check
+    , limit = limit time
+    , nextFrame = snd check
+    }
+    where ac = acc time + d
+          check
+            | limit time <= 0 = (0, True)
+            | ac >= limit time = (mod ac (limit time), True)
+            | otherwise = (ac, False)
