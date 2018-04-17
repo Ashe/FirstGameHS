@@ -3,6 +3,7 @@
 ------------------------------------------------
 
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RecursiveDo #-}
 
 module Game
 ( game
@@ -11,6 +12,7 @@ module Game
 
 import System.Exit (exitSuccess)
 
+import Control.Monad
 import SDL.Vect
 import SDL (($=))
 import qualified SDL
@@ -30,15 +32,16 @@ import Guy
 game :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => GameSetup -> m () 
 game setup = do
 
+  -- When the network is finished setting up
+  gameReady <- getPostBuild
+
   -- Set up time and limit values
   ticks <- getDeltaTickEvent
   limit <- holdDyn (frameLimit $ options setup) never
   unfTime <- foldDyn updateTime (createTime (frameLimit $ options setup)) (attachPromptlyDyn limit ticks)
 
-  -- performEvent_ $ fmap (liftIO . print . delta) (updated unfTime)
-
   -- Filter out non-game ticks
-  deltaTime <- holdDyn 0 (delta <$> ffilter nextFrame (updated unfTime))
+  delta <- holdDyn (createTime 0) (ffilter nextFrame (updated unfTime))
 
   -- Create the player
   animsList <- loadAnimations "Assets/rogue.json"
@@ -47,12 +50,27 @@ game setup = do
       animation = getAnimation "walk" =<< animationSet
       pAnimState = 
         AnimationState animationSet animation [] "idle" 0 0
-  player <- handleGuy (updated deltaTime) $ createGuy 0 0 pTex pAnimState
-  player' <- handleGuy (updated deltaTime) $ createGuy 300 300 pTex pAnimState
 
-  -- Every tick, render the background and all entities
-  commitLayer $ ffor deltaTime $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
-  commitLayer $ renderEntities (renderGuy (renderer setup)) [player, player']
+  -- Enter the recursive do block, to allow cyclic dependencies
+  rec
+
+    -- Set up the players
+    player <- handleGuy state $ createGuy 0 0 pTex pAnimState
+    player' <- handleGuy state $ createGuy 300 300 pTex pAnimState
+
+    -- Every tick, render the background and all entities
+    commitLayer $ ffor delta $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
+    commitLayer $ join $ ffor state $ \(State _ ps) -> renderEntities (renderGuy (renderer setup)) ps
+
+    -- Create an initial state using data above
+    let initialState =
+          State
+          { deltaTime = delta
+          , ps = [player, player']
+          }
+
+    -- Create the state dynamic
+    state <- holdDyn initialState never
 
   -- Quit on a quit event
   evQuit <- getQuitEvent

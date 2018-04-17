@@ -42,8 +42,8 @@ createGuy x y tex anim =
   }
 
 -- Update the guy's position and location
-updateGuy :: Guy -> CDouble -> Guy
-updateGuy guy dt = 
+updateGuy :: Guy -> Time -> Guy
+updateGuy guy (Time dt _ _ _ _) = 
   guy
   { position =
     let (P pos) = position guy
@@ -65,5 +65,6 @@ renderGuy renderer g =
 
 -- Creates a dynamic from a guy
 handleGuy :: (MonadFix m, MonadHold t m, Reflex t) => 
-  Event t CDouble -> Guy -> m (Dynamic t Guy)
-handleGuy delta guy = foldDyn (flip updateGuy) guy delta
+  Dynamic t (GameState t Guy) -> Guy -> m (Dynamic t Guy)
+handleGuy st guy = foldDyn (flip updateGuy) guy delta
+  where delta = switchDyn $ fmap (updated . deltaTime) st

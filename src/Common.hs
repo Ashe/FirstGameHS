@@ -6,7 +6,8 @@
 
 module Common
 ( Layer
-, Time(..)
+, Time (..)
+, GameState (..)
 , commitLayer
 , commitLayers
 , renderEntities
@@ -82,3 +83,10 @@ updateTime (lim, d) time =
             | limit time <= 0 = (0, True)
             | ac >= limit time = (mod ac (limit time), True)
             | otherwise = (ac, False)
+
+-- An easy package containing lists for all entities and data
+data GameState t p =
+  State
+  { deltaTime :: Dynamic t Time
+  , ps :: [Dynamic t p] 
+  }
