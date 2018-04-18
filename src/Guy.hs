@@ -43,7 +43,7 @@ createGuy x y tex anim =
 
 -- Update the guy's position and location
 updateGuy :: Guy -> Time -> Guy
-updateGuy guy (Time dt _ _ _ _) = 
+updateGuy guy (Time dt _ _ _ _ _) = 
   guy
   { position =
     let (P pos) = position guy

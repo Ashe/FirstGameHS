@@ -16,6 +16,7 @@ module Common
 , createTime
 ) where
 
+import Debug.Trace
 import Control.Monad
 import Control.Applicative
 import Control.Monad.IO.Class
@@ -62,11 +63,12 @@ data Time =
   , acc       :: Word32
   , limit     :: Word32
   , nextFrame :: Bool
+  , postFrame :: Bool
   }
 
 -- Easy way to create a Time
 createTime :: Word32 -> Time
-createTime limit = Time 0 0 0 limit True
+createTime limit = Time 0 0 0 limit True False
 
 -- Update the time with the time since previous frame
 updateTime :: (Word32, Word32) -> Time -> Time
@@ -74,15 +76,17 @@ updateTime (lim, d) time =
   time
     { delta = fromIntegral (acc time) / 1000
     , elapsed = elapsed time + d
-    , acc = fst check
+    , acc = (\(a,_,_) -> a) check
     , limit = limit time
-    , nextFrame = snd check
+    , nextFrame = (\(_,a,_) -> a) check
+    , postFrame = (\(_,_,a)->a) check
     }
     where ac = acc time + d
           check
-            | limit time <= 0 = (0, True)
-            | ac >= limit time = (mod ac (limit time), True)
-            | otherwise = (ac, False)
+            | limit time <= 0 = (d, True, True)
+            | postFrame time && ac >= limit time = (mod ac (limit time), False, False)
+            | ac >= limit time = (ac, True, True)
+            | otherwise = (ac, False, False)
 
 -- An easy package containing lists for all entities and data
 data GameState t p =

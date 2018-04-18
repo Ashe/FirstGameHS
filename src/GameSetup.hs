@@ -41,7 +41,7 @@ initialOptions :: Options
 initialOptions =
   Options
     { screenRes = (640, 480)
-    , frameLimit = 165
+    , frameLimit = 60
     , keybindings = blankKeyBindings :: KeyBindings GameSetup
     }
 
