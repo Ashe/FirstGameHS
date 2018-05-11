@@ -38,8 +38,6 @@ import Reflex.SDL2
 
 import qualified Debug.Trace 
 
-import Paths_FirstGameHS(getDataFileName)
-
 -- A type representing one layer in the game
 type Layer m = Performable m ()
 
@@ -53,19 +51,17 @@ commitLayer = tellDyn . fmap pure
 
 -- Takes file and creates a texture out of it
 getTextureFromImg :: MonadIO m => SDL.Renderer -> FilePath -> m SDL.Texture
-getTextureFromImg renderer img = do
-  yolo <- liftIO $ getDataFileName img
-  liftIO $ putStrLn ("DEBUG - PATH IS: " ++ show yolo ++ "\n") 
-  surface <- liftIO $ SDL.Image.load =<< getDataFileName img
+getTextureFromImg renderer path = do
+  liftIO $ putStrLn ("Loading image: " ++ show path) 
+  surface <- SDL.Image.load path
   texture <- SDL.createTextureFromSurface renderer surface
   SDL.freeSurface surface
   pure texture
 
 -- Load a font from a file
 getFontFromFile :: MonadIO m => FilePath -> Int -> m SDL.Font.Font
-getFontFromFile file size = do
-  path <- liftIO $ getDataFileName file
-  liftIO $ putStrLn ("DEBUG - PATH IS: " ++ show path ++ "\n") 
+getFontFromFile path size = do
+  liftIO $ putStrLn ("Loading font: " ++ show path) 
   SDL.Font.load path size
 
 -- Render text to the screen easily

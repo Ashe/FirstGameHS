@@ -12,10 +12,6 @@ category:               Game
 build-type:             Simple
 cabal-version:          >=1.10
 extra-source-files:     README.md
-data-files:             Assets/*.bmp
-                        , Assets/*.png
-                        , Assets/*.json
-                        , Assets/Fonts/*.ttf
 
 executable FirstGameHS
   hs-source-dirs:       src
@@ -34,8 +30,7 @@ executable FirstGameHS
                         , bytestring
                         , reflex
                         , reflex-sdl2
-  other-modules:        Paths_FirstGameHS
-                        , Game
+  other-modules:        Game
                         , GameSetup
                         , Common
                         , SDLAnimations
