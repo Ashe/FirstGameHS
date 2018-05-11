@@ -16,7 +16,7 @@ import Control.Monad
 import SDL.Vect
 import SDL (($=))
 import qualified SDL
-import qualified SDL.Image
+import qualified SDL.Font
 
 import Reflex
 import Reflex.SDL2
@@ -43,6 +43,9 @@ game setup = do
   -- Filter out non-game ticks
   delta <- holdDyn (createTime 0) (ffilter nextFrame (updated unfTime))
 
+  -- Load a font with respect to Assets folder
+  defFont <- getFontFromFile "Assets/Fonts/Hack-Regular.ttf" 20
+
   -- Create the player
   animsList <- loadAnimations "Assets/rogue.json"
   pTex <- getTextureFromImg (renderer setup) "Assets/rogue.png"
@@ -54,13 +57,16 @@ game setup = do
   -- Enter the recursive do block, to allow cyclic dependencies
   rec
 
-    -- Set up the players
+    -- Set up the playersHey everyone
     player <- handleGuy state $ createGuy 0 0 pTex pAnimState
     player' <- handleGuy state $ createGuy 300 300 pTex pAnimState
 
     -- Every tick, render the background and all entities
     commitLayer $ ffor delta $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
     commitLayer $ join $ ffor state $ \(State _ ps) -> renderEntities (renderGuy (renderer setup)) ps
+
+    -- Show FPS counter
+    commitLayer $ ffor delta $ \_ -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) "Testing" 0 0
 
     -- Create an initial state using data above
     let initialState =
@@ -77,6 +83,7 @@ game setup = do
   performEvent_ $ ffor evQuit $ \() -> liftIO $ do
     SDL.quit
     SDL.destroyWindow $ window setup
+    SDL.Font.quit
     exitSuccess
 
 -- Start the game loop properly

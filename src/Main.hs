@@ -6,6 +6,8 @@ import SDL.Vect
 import SDL (($=))
 import qualified SDL
 
+import qualified SDL.Font
+
 import Game
 import GameSetup
 import Common(getTextureFromImg)
@@ -17,6 +19,7 @@ main = do
 
   -- Initialise SDL
   SDL.initialize [SDL.InitVideo]
+  SDL.Font.initialize
 
   -- Create a window with the correct screensize and make it appear
   window <- SDL.createWindow "FirstGameHS" SDL.defaultWindow 

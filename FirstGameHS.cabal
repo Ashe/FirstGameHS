@@ -15,6 +15,7 @@ extra-source-files:     README.md
 data-files:             Assets/*.bmp
                         , Assets/*.png
                         , Assets/*.json
+                        , Assets/Fonts/*.ttf
 
 executable FirstGameHS
   hs-source-dirs:       src
@@ -23,9 +24,11 @@ executable FirstGameHS
   build-depends:        base >= 4.7 && < 5
                         , sdl2
                         , sdl2-image
+                        , sdl2-ttf
                         , pretty-simple
                         , directory
                         , containers
+                        , text
                         , aeson
                         , aeson-pretty
                         , bytestring

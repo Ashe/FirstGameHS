@@ -10,20 +10,28 @@ module Common
 , GameState (..)
 , commitLayer
 , commitLayers
+, renderSolidText
+, renderBlendedText
 , renderEntities
 , getTextureFromImg
+, getFontFromFile
 , updateTime
 , createTime
 ) where
 
-import Debug.Trace
+import Debug.Trace as Trace
 import Control.Monad
+import Control.Arrow((***))
 import Control.Applicative
 import Control.Monad.IO.Class
+
+import qualified Data.Text
 import GHC.Word(Word32)
 import Foreign.C.Types
+
 import qualified SDL
 import qualified SDL.Image
+import qualified SDL.Font
 
 import Reflex
 import Reflex.SDL2
@@ -46,10 +54,45 @@ commitLayer = tellDyn . fmap pure
 -- Takes file and creates a texture out of it
 getTextureFromImg :: MonadIO m => SDL.Renderer -> FilePath -> m SDL.Texture
 getTextureFromImg renderer img = do
+  yolo <- liftIO $ getDataFileName img
+  liftIO $ putStrLn ("DEBUG - PATH IS: " ++ show yolo ++ "\n") 
   surface <- liftIO $ SDL.Image.load =<< getDataFileName img
   texture <- SDL.createTextureFromSurface renderer surface
   SDL.freeSurface surface
   pure texture
+
+-- Load a font from a file
+getFontFromFile :: MonadIO m => FilePath -> Int -> m SDL.Font.Font
+getFontFromFile file size = do
+  path <- liftIO $ getDataFileName file
+  liftIO $ putStrLn ("DEBUG - PATH IS: " ++ show path ++ "\n") 
+  SDL.Font.load path size
+
+-- Render text to the screen easily
+renderText :: MonadIO m => SDL.Renderer -> SDL.Font.Font -> 
+           (SDL.Font.Color -> Data.Text.Text -> m SDL.Surface) ->
+           SDL.Font.Color -> String -> Int -> Int -> m ()
+renderText r fo fu c t x y = do
+  let text = Data.Text.pack t
+  surface <- fu c text
+  texture <- SDL.createTextureFromSurface r surface
+  SDL.freeSurface surface
+  size <- SDL.Font.size fo text
+  let (w, h) = (fromIntegral *** fromIntegral) size
+      x' = fromIntegral x
+      y' = fromIntegral y
+  SDL.copy r texture Nothing (Just (Rectangle (P $ V2 x' y') (V2 w h)))
+
+-- Render solid text
+renderSolidText :: MonadIO m => SDL.Renderer -> SDL.Font.Font -> 
+                SDL.Font.Color -> String -> Int -> Int -> m ()
+renderSolidText r fo = renderText r fo (SDL.Font.solid fo)
+
+
+-- Render blended text
+renderBlendedText :: MonadIO m => SDL.Renderer -> SDL.Font.Font -> 
+                  SDL.Font.Color -> String -> Int -> Int -> m ()
+renderBlendedText r fo = renderText r fo (SDL.Font.blended fo)
 
 -- Render multiple entities
 renderEntities :: (Monad m, MonadIO mIO) => (a -> mIO ()) -> [m a] -> m (mIO ())
