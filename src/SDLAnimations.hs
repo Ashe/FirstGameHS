@@ -17,10 +17,14 @@ module SDLAnimations
 import Control.Monad.IO.Class
 import Foreign.C.Types
 import SDL.Vect
+import Data.Fixed
 import qualified SDL
 import qualified SDL.Image
 
+import Common
 import AnimationLoader
+
+import Debug.Trace
 
 -- State for keeping track of animations
 data AnimationState =
@@ -30,7 +34,8 @@ data AnimationState =
     , animationBuffer   :: [String]
     , defaultAnimation  :: String
     , frameNumber       :: Int
-    , tickCount         :: CDouble
+    , secondsIntoAnim   :: Double
+    , framesPerSecond   :: Int
     } deriving (Show)
 
 -- Non-serializable AnimationSet
@@ -84,23 +89,27 @@ getFrame frame (Animation _ _ frames) = newNum
           | otherwise = head frames
 
 -- Add one frame to the animation state, and wrap it round if need be
-updateAnimationState :: CDouble -> CDouble -> AnimationState -> AnimationState
-updateAnimationState delta tickRate state = 
+updateAnimationState :: Time -> AnimationState -> AnimationState
+updateAnimationState time state = 
   state
-  { tickCount = fst nextAnimationTick
-  , frameNumber = newFrameNumber $ snd nextAnimationTick }
-  where nextAnimationTick = calculateTickCount delta tickRate state
+  { secondsIntoAnim = fst nextAnimationTick
+  , frameNumber = Debug.Trace.trace ("Frame number: " ++ show (newFrameNumber $ snd nextAnimationTick)) newFrameNumber $ snd nextAnimationTick }
+  where nextAnimationTick = calculateTickCount time state
         newFrameNumber b
           | b = advanceAnimationFrame state
           | otherwise = frameNumber state
 
 -- Increases the tick count and sets a flag if there should be a new frame
-calculateTickCount :: CDouble -> CDouble -> AnimationState -> (CDouble, Bool)
-calculateTickCount delta tickRate state 
-  | delta + ticks > tickRate = (delta + ticks - tickRate, nextFrame (currentAnimation state))
-  | otherwise = (delta + ticks, False)
-  where ticks = tickCount state
-        nextFrame (Just anim)= loop anim || not (lastFrame anim)
+calculateTickCount :: Time -> AnimationState -> (Double, Bool)
+calculateTickCount time state 
+  | ticks >= fps = (mod' ticks fps, nextFrame (currentAnimation state))
+  | otherwise = (ticks, False)
+  -- | ticks >= fps = Debug.Trace.trace( 
+ --  ("\nDeltaTime: " ++ show (delta time)) ++ ("\nElapsed: " ++ show (elapsed time)) ++ ("\nCycles per second: " ++ show fps) ++ ("\nTicks this update: " ++ show ticks)) (mod' ticks fps, nextFrame (currentAnimation state))
+ -- | otherwise = Debug.Trace.trace ("\nNO ANIMATION - ticks this update: " ++ show ticks ++ "\n") (ticks, False)
+  where fps = (1000 / fromIntegral (framesPerSecond state)) / 1000
+        ticks = secondsIntoAnim state + delta time
+        nextFrame (Just anim) = loop anim || not (lastFrame anim)
         nextFrame _ = False
         lastFrame anim = frameNumber state >= length (frames anim) - 1
 
@@ -108,12 +117,11 @@ calculateTickCount delta tickRate state
 advanceAnimationFrame :: AnimationState -> Int
 advanceAnimationFrame state = newFrame
   where nextFrame = frameNumber state + 1
-        len Nothing = 0
         len (Just x) = length (frames x)
+        len _ = 0
         newFrame
           | len (currentAnimation state) > nextFrame = nextFrame
           | otherwise = 0
-
 
 -- Uses information in the animation state to get the right frame
 getCurrentFrame :: AnimationState -> Maybe (SDL.Rectangle CInt)

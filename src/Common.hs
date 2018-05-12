@@ -78,6 +78,7 @@ renderText r fo fu c t x y = do
       x' = fromIntegral x
       y' = fromIntegral y
   SDL.copy r texture Nothing (Just (Rectangle (P $ V2 x' y') (V2 w h)))
+  SDL.destroyTexture texture
 
 -- Render solid text
 renderSolidText :: MonadIO m => SDL.Renderer -> SDL.Font.Font -> 
@@ -97,17 +98,18 @@ renderEntities f l = foldM (\_ g -> f g) () <$> sequence l
 -- Data for containing time values
 data Time =
   Time
-  { delta     :: CDouble
-  , elapsed   :: Word32
-  , acc       :: Word32
-  , limit     :: Word32
-  , nextFrame :: Bool
-  , postFrame :: Bool
+  { delta       :: Double
+  , elapsed     :: Word32
+  , acc         :: Word32
+  , fps         :: Word32
+  , frameLimit  :: Word32
+  , nextFrame   :: Bool
+  , postFrame   :: Bool
   }
 
 -- Easy way to create a Time
 createTime :: Word32 -> Time
-createTime limit = Time 0 0 0 limit True False
+createTime limit = Time 0 0 0 0 limit True False
 
 -- Update the time with the time since previous frame
 updateTime :: (Word32, Word32) -> Time -> Time
@@ -116,15 +118,18 @@ updateTime (lim, d) time =
     { delta = fromIntegral (acc time) / 1000
     , elapsed = elapsed time + d
     , acc = (\(a,_,_) -> a) check
-    , limit = limit time
+    , fps = round (1000 / fromIntegral (acc time))
     , nextFrame = (\(_,a,_) -> a) check
     , postFrame = (\(_,_,a)->a) check
     }
     where ac = acc time + d
+          limit
+            | frameLimit time == 0 = 0
+            | otherwise = round(1000 / fromIntegral (frameLimit time))
           check
-            | limit time <= 0 = (d, True, True)
-            | postFrame time && ac >= limit time = (mod ac (limit time), False, False)
-            | ac >= limit time = (ac, True, True)
+            | limit <= 0 = (d, True, True)
+            | postFrame time && ac > limit = (mod ac limit, False, False)
+            | ac >= limit = (ac, True, True)
             | otherwise = (ac, False, False)
 
 -- An easy package containing lists for all entities and data

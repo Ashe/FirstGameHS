@@ -28,7 +28,7 @@ data GameSetup =
 data Options = 
   Options 
     { screenRes   :: (CInt, CInt)
-    , frameLimit  :: Word32
+    , maxFrames   :: Word32
     , keybindings :: KeyBindings GameSetup
     }
 
@@ -41,7 +41,7 @@ initialOptions :: Options
 initialOptions =
   Options
     { screenRes = (640, 480)
-    , frameLimit = 60
+    , maxFrames = 2
     , keybindings = blankKeyBindings :: KeyBindings GameSetup
     }
 

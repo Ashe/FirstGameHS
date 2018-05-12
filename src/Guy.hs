@@ -25,14 +25,14 @@ import SDLAnimations
 -- Simple character
 data Guy =
  Guy
- { position   :: Point V2 CDouble
- , velocity   :: V2 CDouble
+ { position   :: Point V2 Double
+ , velocity   :: V2 Double
  , texture    :: SDL.Texture
  , animation  :: AnimationState
  }
 
 -- Creates a guy out of simple data
-createGuy :: CDouble -> CDouble -> SDL.Texture -> AnimationState -> Guy
+createGuy :: Double -> Double -> SDL.Texture -> AnimationState -> Guy
 createGuy x y tex anim =
   Guy
   { position  = P $ V2 x y
@@ -43,13 +43,13 @@ createGuy x y tex anim =
 
 -- Update the guy's position and location
 updateGuy :: Guy -> Time -> Guy
-updateGuy guy (Time dt _ _ _ _ _) = 
+updateGuy guy time@(Time dt _ _ _ _ _ _) = 
   guy
   { position =
     let (P pos) = position guy
         (V2 newPosX newPosY) = pos + velocity guy * V2 dt dt
      in P $ V2 newPosX newPosY
-  , animation = updateAnimationState dt 0.1 (animation guy)
+  , animation = updateAnimationState time (animation guy)
   }
 
 -- Print the guy to the terminal

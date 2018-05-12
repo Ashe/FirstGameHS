@@ -37,8 +37,8 @@ game setup = do
 
   -- Set up time and limit values
   ticks <- getDeltaTickEvent
-  limit <- holdDyn (frameLimit $ options setup) never
-  unfTime <- foldDyn updateTime (createTime (frameLimit $ options setup)) (attachPromptlyDyn limit ticks)
+  limit <- holdDyn (maxFrames $ options setup) never
+  unfTime <- foldDyn updateTime (createTime (maxFrames $ options setup)) (attachPromptlyDyn limit ticks)
 
   -- Filter out non-game ticks
   delta <- holdDyn (createTime 0) (ffilter nextFrame (updated unfTime))
@@ -52,7 +52,7 @@ game setup = do
   let animationSet = getAnimationSet "rogue" "male" =<< animsList
       animation = getAnimation "walk" =<< animationSet
       pAnimState = 
-        AnimationState animationSet animation [] "idle" 0 0
+        AnimationState animationSet animation [] "idle" 0 0 10
 
   -- Enter the recursive do block, to allow cyclic dependencies
   rec
@@ -66,13 +66,15 @@ game setup = do
     commitLayer $ join $ ffor state $ \(State _ ps) -> renderEntities (renderGuy (renderer setup)) ps
 
     -- Show FPS counter
-    commitLayer $ ffor delta $ \_ -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) "Testing" 0 0
+    commitLayer $ ffor delta $ \(Time _ _ _ fps _ _ _) -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) (show fps) 0 0
+
+   --performEvent_ $ fmap (const testPrint) (updated delta)
 
     -- Create an initial state using data above
     let initialState =
           State
           { deltaTime = delta
-          , ps = [player, player']
+          , ps = [player]
           }
 
     -- Create the state dynamic
@@ -82,6 +84,7 @@ game setup = do
   evQuit <- getQuitEvent
   performEvent_ $ ffor evQuit $ \() -> liftIO $ do
     SDL.quit
+    SDL.destroyRenderer $ renderer setup
     SDL.destroyWindow $ window setup
     SDL.Font.quit
     exitSuccess
@@ -98,3 +101,7 @@ beginGame gs =
       present r
   where w = window gs
         r = renderer gs
+
+-- Function to just print something to the screen
+testPrint :: MonadIO m => m ()
+testPrint = liftIO $ print "Test print"
