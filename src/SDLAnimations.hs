@@ -93,7 +93,7 @@ updateAnimationState :: Time -> AnimationState -> AnimationState
 updateAnimationState time state = 
   state
   { secondsIntoAnim = fst nextAnimationTick
-  , frameNumber = Debug.Trace.trace ("Frame number: " ++ show (newFrameNumber $ snd nextAnimationTick)) newFrameNumber $ snd nextAnimationTick }
+  , frameNumber = newFrameNumber $ snd nextAnimationTick }
   where nextAnimationTick = calculateTickCount time state
         newFrameNumber b
           | b = advanceAnimationFrame state

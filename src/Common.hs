@@ -119,6 +119,7 @@ updateTime (lim, d) time =
     , elapsed = elapsed time + d
     , acc = (\(a,_,_) -> a) check
     , fps = round (1000 / fromIntegral (acc time))
+    , frameLimit = lim
     , nextFrame = (\(_,a,_) -> a) check
     , postFrame = (\(_,_,a)->a) check
     }
