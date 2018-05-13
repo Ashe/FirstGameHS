@@ -93,30 +93,25 @@ updateAnimationState :: Time -> AnimationState -> AnimationState
 updateAnimationState time state = 
   state
   { secondsIntoAnim = fst nextAnimationTick
-  , frameNumber = newFrameNumber $ snd nextAnimationTick }
+  , frameNumber = advanceAnimationFrame state $ snd nextAnimationTick }
   where nextAnimationTick = calculateTickCount time state
-        newFrameNumber b
-          | b = advanceAnimationFrame state
-          | otherwise = frameNumber state
 
--- Increases the tick count and sets a flag if there should be a new frame
-calculateTickCount :: Time -> AnimationState -> (Double, Bool)
+-- Accumilates a timer for the animation and keeps track of frames passed
+calculateTickCount :: Time -> AnimationState -> (Double, Int)
 calculateTickCount time state 
-  | ticks >= fps = (mod' ticks fps, nextFrame (currentAnimation state))
-  | otherwise = (ticks, False)
-  -- | ticks >= fps = Debug.Trace.trace( 
- --  ("\nDeltaTime: " ++ show (delta time)) ++ ("\nElapsed: " ++ show (elapsed time)) ++ ("\nCycles per second: " ++ show fps) ++ ("\nTicks this update: " ++ show ticks)) (mod' ticks fps, nextFrame (currentAnimation state))
- -- | otherwise = Debug.Trace.trace ("\nNO ANIMATION - ticks this update: " ++ show ticks ++ "\n") (ticks, False)
+  | ticks >= fps = (mod' ticks fps, maybe 0 nextFrame (currentAnimation state))
+  | otherwise = (ticks, 0)
   where fps = (1000 / fromIntegral (framesPerSecond state)) / 1000
         ticks = secondsIntoAnim state + delta time
-        nextFrame (Just anim) = loop anim || not (lastFrame anim)
-        nextFrame _ = False
+        nextFrame anim 
+          | loop anim || not (lastFrame anim) = div' ticks fps
+          | otherwise = 0
         lastFrame anim = frameNumber state >= length (frames anim) - 1
 
--- Move the animation to the next frame if the tickCount is high
-advanceAnimationFrame :: AnimationState -> Int
-advanceAnimationFrame state = Debug.Trace.trace ("New frame: " ++ show newFrame) newFrame
-  where nextFrame = frameNumber state + 1
+-- Animate the appropriate number of frames forward with respect to the set
+advanceAnimationFrame :: AnimationState -> Int -> Int
+advanceAnimationFrame state steps = newFrame
+  where nextFrame = frameNumber state + steps
         len (Just x) = length (frames x)
         len _ = 0
         newFrame

@@ -43,7 +43,8 @@ game setup = do
   -- Filter out non-game ticks
   delta <- holdDyn (createTime 0) (ffilter nextFrame (updated unfTime))
 
-  performEvent_ $ fmap (const testPrint) (updated delta)
+  -- Print a message every frame tick
+  -- performEvent_ $ fmap (const testPrint) (updated delta)
 
   -- Load a font with respect to Assets folder
   defFont <- getFontFromFile "Assets/Fonts/Hack-Regular.ttf" 20
@@ -54,7 +55,7 @@ game setup = do
   let animationSet = getAnimationSet "rogue" "male" =<< animsList
       animation = getAnimation "walk" =<< animationSet
       pAnimState = 
-        AnimationState animationSet animation [] "idle" 0 0 4
+        AnimationState animationSet animation [] "idle" 0 0 10
 
   -- Enter the recursive do block, to allow cyclic dependencies
   rec
