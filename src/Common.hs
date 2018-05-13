@@ -85,7 +85,6 @@ renderSolidText :: MonadIO m => SDL.Renderer -> SDL.Font.Font ->
                 SDL.Font.Color -> String -> Int -> Int -> m ()
 renderSolidText r fo = renderText r fo (SDL.Font.solid fo)
 
-
 -- Render blended text
 renderBlendedText :: MonadIO m => SDL.Renderer -> SDL.Font.Font -> 
                   SDL.Font.Color -> String -> Int -> Int -> m ()
@@ -126,11 +125,11 @@ updateTime (lim, d) time =
     where ac = acc time + d
           limit
             | frameLimit time == 0 = 0
-            | otherwise = round(1000 / fromIntegral (frameLimit time))
+            | otherwise = round (1000 / fromIntegral (frameLimit time))
           check
             | limit <= 0 = (d, True, True)
-            | postFrame time && ac >= limit = (mod ac limit, False, False)
-            | ac >= limit = (ac, True, True)
+            | postFrame time = (mod ac limit, False, False)
+            | ac > limit = (ac, True, True)
             | otherwise = (ac, False, False)
 
 -- An easy package containing lists for all entities and data
