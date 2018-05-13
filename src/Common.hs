@@ -129,7 +129,7 @@ updateTime (lim, d) time =
             | otherwise = round(1000 / fromIntegral (frameLimit time))
           check
             | limit <= 0 = (d, True, True)
-            | postFrame time && ac > limit = (mod ac limit, False, False)
+            | postFrame time && ac >= limit = (mod ac limit, False, False)
             | ac >= limit = (ac, True, True)
             | otherwise = (ac, False, False)
 

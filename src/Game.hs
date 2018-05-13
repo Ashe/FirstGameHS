@@ -43,6 +43,8 @@ game setup = do
   -- Filter out non-game ticks
   delta <- holdDyn (createTime 0) (ffilter nextFrame (updated unfTime))
 
+  performEvent_ $ fmap (const testPrint) (updated delta)
+
   -- Load a font with respect to Assets folder
   defFont <- getFontFromFile "Assets/Fonts/Hack-Regular.ttf" 20
 
@@ -52,7 +54,7 @@ game setup = do
   let animationSet = getAnimationSet "rogue" "male" =<< animsList
       animation = getAnimation "walk" =<< animationSet
       pAnimState = 
-        AnimationState animationSet animation [] "idle" 0 0 10
+        AnimationState animationSet animation [] "idle" 0 0 4
 
   -- Enter the recursive do block, to allow cyclic dependencies
   rec
@@ -67,8 +69,6 @@ game setup = do
 
     -- Show FPS counter
     commitLayer $ ffor delta $ \(Time _ _ _ fps _ _ _) -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) (show fps) 0 0
-
-   --performEvent_ $ fmap (const testPrint) (updated delta)
 
     -- Create an initial state using data above
     let initialState =
@@ -104,4 +104,4 @@ beginGame gs =
 
 -- Function to just print something to the screen
 testPrint :: MonadIO m => m ()
-testPrint = liftIO $ print "Test print"
+testPrint = liftIO $ print "Frame tick"

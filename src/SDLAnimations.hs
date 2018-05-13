@@ -115,7 +115,7 @@ calculateTickCount time state
 
 -- Move the animation to the next frame if the tickCount is high
 advanceAnimationFrame :: AnimationState -> Int
-advanceAnimationFrame state = newFrame
+advanceAnimationFrame state = Debug.Trace.trace ("New frame: " ++ show newFrame) newFrame
   where nextFrame = frameNumber state + 1
         len (Just x) = length (frames x)
         len _ = 0
