@@ -55,7 +55,6 @@ game setup = do
 
   -- Print a message every frame tick
   -- performEvent_ $ fmap (const testPrint) (updated delta)
-  -- commitLayer $ ffor deltaAcc (liftIO . print)
 
   -- Load a font with respect to Assets folder
   defFont <- getFontFromFile "Assets/Fonts/Hack-Regular.ttf" 20
@@ -73,7 +72,20 @@ game setup = do
 
     -- Set up the playersHey everyone
     player <- handleGuy state $ createGuy 0 0 pTex pAnimState
-    player' <- handleGuy state $ createGuy 300 300 pTex pAnimState
+    player1 <- handleGuy state $ createGuy 50 0 pTex pAnimState
+    player2 <- handleGuy state $ createGuy 100 0 pTex pAnimState
+    player3 <- handleGuy state $ createGuy 150 0 pTex pAnimState
+    player4 <- handleGuy state $ createGuy 200 0 pTex pAnimState
+    player5 <- handleGuy state $ createGuy 250 0 pTex pAnimState
+    player6 <- handleGuy state $ createGuy 300 0 pTex pAnimState
+
+    player7 <- handleGuy state $ createGuy 0 100 pTex pAnimState
+    player8 <- handleGuy state $ createGuy 50 100 pTex pAnimState
+    player9 <- handleGuy state $ createGuy 100 100 pTex pAnimState
+    player10 <- handleGuy state $ createGuy 150 100 pTex pAnimState
+    player11 <- handleGuy state $ createGuy 200 100 pTex pAnimState
+    player12 <- handleGuy state $ createGuy 250 100 pTex pAnimState
+    player13 <- handleGuy state $ createGuy 300 100 pTex pAnimState
 
     -- Every tick, render the background and all entities
     commitLayer $ ffor delta $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
@@ -86,7 +98,7 @@ game setup = do
     let initialState =
           State
           { deltaTime = delta
-          , ps = [player]
+          , ps = [player, player1, player2, player3, player4, player5, player6, player7, player8, player9, player10, player11, player12, player13]
           }
 
     -- Create the state dynamic
