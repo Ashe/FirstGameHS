@@ -21,7 +21,7 @@ executable FirstGameHS
                         , sdl2
                         , sdl2-image
                         , sdl2-ttf
-                        , pretty-simple
+                        , time
                         , directory
                         , containers
                         , text

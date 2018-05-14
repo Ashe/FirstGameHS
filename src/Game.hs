@@ -10,9 +10,11 @@ module Game
 , beginGame
 ) where
 
+import Data.Time.Clock
 import System.Exit (exitSuccess)
 
 import Control.Monad
+import Control.Monad.Fix
 import SDL.Vect
 import SDL (($=))
 import qualified SDL
@@ -43,8 +45,17 @@ game setup = do
   -- Filter out non-game ticks
   delta <- holdDyn (createTime 0) (ffilter nextFrame (updated unfTime))
 
+  -- Count when delta fires and compare at different times to calculate fps
+  deltaCount <- count $ updated delta
+
+  -- Tick every quarterSecond
+  secondCount <- getRecurringTimerEventWithEventCode 0 1000
+  deltaStore <- foldDyn (\a (b,_)->(a,b)) (0,0) $ tagPromptlyDyn deltaCount secondCount
+  fps <- holdDyn 0 $ uncurry (-) <$> updated deltaStore
+
   -- Print a message every frame tick
   -- performEvent_ $ fmap (const testPrint) (updated delta)
+  -- commitLayer $ ffor deltaAcc (liftIO . print)
 
   -- Load a font with respect to Assets folder
   defFont <- getFontFromFile "Assets/Fonts/Hack-Regular.ttf" 20
@@ -69,7 +80,7 @@ game setup = do
     commitLayer $ join $ ffor state $ \(State _ ps) -> renderEntities (renderGuy (renderer setup)) ps
 
     -- Show FPS counter
-    commitLayer $ ffor delta $ \(Time _ _ _ fps _ _ _) -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) (show fps) 0 0
+    commitLayer $ ffor fps $ \a -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) (show a) 0 0
 
     -- Create an initial state using data above
     let initialState =

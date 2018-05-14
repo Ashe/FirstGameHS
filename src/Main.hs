@@ -18,7 +18,7 @@ main :: IO ()
 main = do
 
   -- Initialise SDL
-  SDL.initialize [SDL.InitVideo]
+  SDL.initialize [SDL.InitVideo, SDL.InitAudio, SDL.InitTimer, SDL.InitEvents]
   SDL.Font.initialize
 
   -- Create a window with the correct screensize and make it appear
