@@ -100,7 +100,6 @@ data Time =
   { delta       :: Double
   , elapsed     :: Word32
   , acc         :: Word32
-  , fps         :: Word32
   , frameLimit  :: Word32
   , nextFrame   :: Bool
   , postFrame   :: Bool
@@ -108,7 +107,7 @@ data Time =
 
 -- Easy way to create a Time
 createTime :: Word32 -> Time
-createTime limit = Time 0 0 0 0 limit True False
+createTime limit = Time 0 0 0 limit True False
 
 -- Update the time with the time since previous frame
 updateTime :: (Word32, Word32) -> Time -> Time
@@ -117,7 +116,6 @@ updateTime (lim, d) time =
     { delta = fromIntegral (acc time) / 1000
     , elapsed = elapsed time + d
     , acc = (\(a,_,_) -> a) check
-    , fps = round (1000 / fromIntegral (acc time))
     , frameLimit = lim
     , nextFrame = (\(_,a,_) -> a) check
     , postFrame = (\(_,_,a)->a) check

@@ -71,25 +71,25 @@ game setup = do
   rec
 
     -- Set up the playersHey everyone
-    player <- handleGuy state $ createGuy 0 0 pTex pAnimState
-    player1 <- handleGuy state $ createGuy 50 0 pTex pAnimState
-    player2 <- handleGuy state $ createGuy 100 0 pTex pAnimState
-    player3 <- handleGuy state $ createGuy 150 0 pTex pAnimState
-    player4 <- handleGuy state $ createGuy 200 0 pTex pAnimState
-    player5 <- handleGuy state $ createGuy 250 0 pTex pAnimState
-    player6 <- handleGuy state $ createGuy 300 0 pTex pAnimState
+    player <- handleGuy state $ createGuy 0 0 (renderer setup) pTex pAnimState
+    player1 <- handleGuy state $ createGuy 50 0 (renderer setup) pTex pAnimState
+    player2 <- handleGuy state $ createGuy 100 0 (renderer setup) pTex pAnimState
+    player3 <- handleGuy state $ createGuy 150 0 (renderer setup) pTex pAnimState
+    player4 <- handleGuy state $ createGuy 200 0 (renderer setup) pTex pAnimState
+    player5 <- handleGuy state $ createGuy 250 0 (renderer setup) pTex pAnimState
+    player6 <- handleGuy state $ createGuy 300 0 (renderer setup) pTex pAnimState
 
-    player7 <- handleGuy state $ createGuy 0 100 pTex pAnimState
-    player8 <- handleGuy state $ createGuy 50 100 pTex pAnimState
-    player9 <- handleGuy state $ createGuy 100 100 pTex pAnimState
-    player10 <- handleGuy state $ createGuy 150 100 pTex pAnimState
-    player11 <- handleGuy state $ createGuy 200 100 pTex pAnimState
-    player12 <- handleGuy state $ createGuy 250 100 pTex pAnimState
-    player13 <- handleGuy state $ createGuy 300 100 pTex pAnimState
+    player7 <- handleGuy state $ createGuy 0 100 (renderer setup) pTex pAnimState
+    player8 <- handleGuy state $ createGuy 50 100 (renderer setup) pTex pAnimState
+    player9 <- handleGuy state $ createGuy 100 100 (renderer setup) pTex pAnimState
+    player10 <- handleGuy state $ createGuy 150 100 (renderer setup) pTex pAnimState
+    player11 <- handleGuy state $ createGuy 200 100 (renderer setup) pTex pAnimState
+    player12 <- handleGuy state $ createGuy 250 100 (renderer setup) pTex pAnimState
+    player13 <- handleGuy state $ createGuy 300 100 (renderer setup) pTex pAnimState
 
     -- Every tick, render the background and all entities
     commitLayer $ ffor delta $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
-    commitLayer $ join $ ffor state $ \(State _ ps) -> renderEntities (renderGuy (renderer setup)) ps
+    commitLayer $ join $ ffor state $ \(State _ ps) -> renderEntities (\a->Guy.render a a) ps
 
     -- Show FPS counter
     commitLayer $ ffor fps $ \a -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) (show a) 0 0
@@ -99,6 +99,7 @@ game setup = do
           State
           { deltaTime = delta
           , ps = [player, player1, player2, player3, player4, player5, player6, player7, player8, player9, player10, player11, player12, player13]
+          --, ps = [player]
           }
 
     -- Create the state dynamic

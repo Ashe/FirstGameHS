@@ -2,6 +2,8 @@
 ---------------------------
 
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE RankNTypes #-}
 
 module Guy 
   ( Guy (..)
@@ -27,23 +29,23 @@ data Guy =
  Guy
  { position   :: Point V2 Double
  , velocity   :: V2 Double
- , texture    :: SDL.Texture
+ , render     :: forall m. MonadIO m => Guy -> m ()
  , animation  :: AnimationState
  }
 
 -- Creates a guy out of simple data
-createGuy :: Double -> Double -> SDL.Texture -> AnimationState -> Guy
-createGuy x y tex anim =
+createGuy :: Double -> Double -> SDL.Renderer -> SDL.Texture -> AnimationState -> Guy
+createGuy x y r tex anim = 
   Guy
-  { position  = P $ V2 x y
-  , velocity  = V2 0 0
-  , texture   = tex
+  { position  = P $ V2 x y , velocity  = V2 0 0
+  , render = renderGuy r tex
   , animation = anim
   }
 
+
 -- Update the guy's position and location
 updateGuy :: Guy -> Time -> Guy
-updateGuy guy time@(Time dt _ _ _ _ _ _) = 
+updateGuy guy time@(Time dt _ _ _ _ _) = 
   guy
   { position =
     let (P pos) = position guy
@@ -57,9 +59,9 @@ printGuy :: MonadIO m => Guy -> m ()
 printGuy g = liftIO . print $ position g
 
 -- Render the guy
-renderGuy :: MonadIO m => SDL.Renderer -> Guy -> m ()
-renderGuy renderer g =
-  SDL.copy renderer (texture g)
+renderGuy :: MonadIO m => SDL.Renderer -> SDL.Texture -> Guy -> m ()
+renderGuy renderer t g =
+  SDL.copy renderer t
   (getCurrentFrame $ animation g) $ Just $ 
   SDL.Rectangle (truncate <$> position g) (V2 100 100)
 
