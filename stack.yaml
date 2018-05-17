@@ -44,7 +44,7 @@ extra-deps:
   commit: 9f3356fecb1620f74b45291b38aaaafbe92458fa
 - prim-uniq-0.1.0.1
 - git: git://github.com/schell/reflex-sdl2.git
-  commit: b2089accef02ee218a8ec7d909471b34f824f09e
+  commit: 02ec27d71551875add6cb0e11e43b650cce3f1cb
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

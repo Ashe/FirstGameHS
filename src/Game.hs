@@ -47,11 +47,13 @@ game setup = do
 
   -- Count when delta fires and compare at different times to calculate fps
   deltaCount <- count $ updated delta
+  -- deltaCountAlt <- delay 1 $ updated deltaCount
 
   -- Tick every quarterSecond
   secondCount <- getRecurringTimerEventWithEventCode 0 1000
   deltaStore <- foldDyn (\a (b,_)->(a,b)) (0,0) $ tagPromptlyDyn deltaCount secondCount
   fps <- holdDyn 0 $ uncurry (-) <$> updated deltaStore
+  -- fps <- holdDyn 0 $ attachPromptlyDynWith (-) deltaCount deltaCountAlt
 
   -- Print a message every frame tick
   -- performEvent_ $ fmap (const testPrint) (updated delta)
@@ -98,8 +100,8 @@ game setup = do
     let initialState =
           State
           { deltaTime = delta
-          , ps = [player, player1, player2, player3, player4, player5, player6, player7, player8, player9, player10, player11, player12, player13]
-          --, ps = [player]
+          -- , ps = [player, player1, player2, player3, player4, player5, player6, player7, player8, player9, player10, player11, player12, player13]
+          , ps = [player]
           }
 
     -- Create the state dynamic
