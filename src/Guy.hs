@@ -8,9 +8,7 @@
 module Guy 
   ( Guy (..)
   , createGuy
-  , updateGuy
   , renderGuy
-  , handleGuy
   ) where
 
 import Control.Monad.Fix
@@ -25,48 +23,38 @@ import Common
 import SDLAnimations
 
 -- Simple character
-data Guy =
+data Guy t m =
  Guy
- { position   :: Point V2 Double
- , velocity   :: V2 Double
- , render     :: forall m. MonadIO m => Guy -> m ()
- , animation  :: AnimationState
+ { position   :: Dynamic t (Point V2 Double)
+ , velocity   :: Behavior t (V2 Double)
+ , render     :: Behavior t (m ())
+ , animation  :: Dynamic t AnimationState
  }
 
 -- Creates a guy out of simple data
-createGuy :: Double -> Double -> SDL.Renderer -> SDL.Texture -> AnimationState -> Guy
-createGuy x y r tex anim = 
-  Guy
-  { position  = P $ V2 x y , velocity  = V2 0 0
-  , render = renderGuy r tex
-  , animation = anim
-  }
+createGuy :: forall t m. (MonadIO m, MonadFix (Dynamic t), MonadHold t (Dynamic t), Reflex t) => 
+  Double -> Double -> SDL.Renderer -> Dynamic t Time -> SDL.Texture -> AnimationState -> Dynamic t (Guy t m)
+createGuy x y r time tex anim = do
+  vel <- hold (V2 0 0) never
+  pos <- foldDyn updatePosition (P $ V2 x y) (attach vel $ updated time)
+  animDyn <- foldDyn updateAnimationState anim $ updated time
+  let initRender = renderGuy r tex (P $ V2 x y, anim)
+  renderDyn <- hold initRender (renderGuy r tex <$> attach (current pos) (updated animDyn))
+  pure Guy
+    { position = pos
+    , velocity = vel
+    , render = renderDyn
+    , animation = animDyn
+    }
 
-
--- Update the guy's position and location
-updateGuy :: Guy -> Time -> Guy
-updateGuy guy time@(Time dt _ _ _ _ _) = 
-  guy
-  { position =
-    let (P pos) = position guy
-        (V2 newPosX newPosY) = pos + velocity guy * V2 dt dt
-     in P $ V2 newPosX newPosY
-  , animation = updateAnimationState time (animation guy)
-  }
-
--- Print the guy to the terminal
-printGuy :: MonadIO m => Guy -> m ()
-printGuy g = liftIO . print $ position g
-
--- Render the guy
-renderGuy :: MonadIO m => SDL.Renderer -> SDL.Texture -> Guy -> m ()
-renderGuy renderer t g =
+-- Update the guy's position using velocity
+updatePosition :: (V2 Double, Time) -> Point V2 Double -> Point V2 Double
+updatePosition (vel, Time dt _ _ _ _ _) (P pos) = P $ V2 newPosX newPosY
+  where (V2 newPosX newPosY) = pos + vel * V2 dt dt
+  
+-- Use the render function stored to produce an image on screen
+renderGuy :: forall m. MonadIO m => SDL.Renderer -> SDL.Texture -> (Point V2 Double, AnimationState) -> m ()
+renderGuy renderer t (p, a) =
   SDL.copy renderer t
-  (getCurrentFrame $ animation g) $ Just $ 
-  SDL.Rectangle (truncate <$> position g) (V2 100 100)
-
--- Creates a dynamic from a guy
-handleGuy :: (MonadFix m, MonadHold t m, Reflex t) => 
-  Dynamic t (GameState t Guy) -> Guy -> m (Dynamic t Guy)
-handleGuy st guy = foldDyn (flip updateGuy) guy delta
-  where delta = switchDyn $ fmap (updated . deltaTime) st
+    (getCurrentFrame a) $ Just $ 
+    SDL.Rectangle (fmap truncate p) (V2 100 100)

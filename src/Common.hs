@@ -134,5 +134,6 @@ updateTime (lim, d) time =
 data GameState t p =
   State
   { deltaTime :: Dynamic t Time
+  , mouse :: Dynamic t SDL.MouseMotionEventData
   , ps :: [Dynamic t p] 
   }

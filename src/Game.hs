@@ -57,6 +57,13 @@ game setup = do
 
   -- Print a message every frame tick
   -- performEvent_ $ fmap (const testPrint) (updated delta)
+  
+  
+  -- Get the mouse location
+  let defMouseM = MouseMotionEventData Nothing (Mouse 0) [] (P $ V2 0 0) (V2 0 0)
+  mM <- holdDyn defMouseM =<< getMouseMotionEvent
+  mB <- getMouseButtonEvent
+  mW <- getMouseWheelEvent
 
   -- Load a font with respect to Assets folder
   defFont <- getFontFromFile "Assets/Fonts/Hack-Regular.ttf" 20
@@ -72,26 +79,12 @@ game setup = do
   -- Enter the recursive do block, to allow cyclic dependencies
   rec
 
-    -- Set up the playersHey everyone
-    player <- handleGuy state $ createGuy 0 0 (renderer setup) pTex pAnimState
-    player1 <- handleGuy state $ createGuy 50 0 (renderer setup) pTex pAnimState
-    player2 <- handleGuy state $ createGuy 100 0 (renderer setup) pTex pAnimState
-    player3 <- handleGuy state $ createGuy 150 0 (renderer setup) pTex pAnimState
-    player4 <- handleGuy state $ createGuy 200 0 (renderer setup) pTex pAnimState
-    player5 <- handleGuy state $ createGuy 250 0 (renderer setup) pTex pAnimState
-    player6 <- handleGuy state $ createGuy 300 0 (renderer setup) pTex pAnimState
-
-    player7 <- handleGuy state $ createGuy 0 100 (renderer setup) pTex pAnimState
-    player8 <- handleGuy state $ createGuy 50 100 (renderer setup) pTex pAnimState
-    player9 <- handleGuy state $ createGuy 100 100 (renderer setup) pTex pAnimState
-    player10 <- handleGuy state $ createGuy 150 100 (renderer setup) pTex pAnimState
-    player11 <- handleGuy state $ createGuy 200 100 (renderer setup) pTex pAnimState
-    player12 <- handleGuy state $ createGuy 250 100 (renderer setup) pTex pAnimState
-    player13 <- handleGuy state $ createGuy 300 100 (renderer setup) pTex pAnimState
+    -- Set up the players
+    player <- createGuy 0 0 (renderer setup) (deltaTime state) pTex pAnimState
 
     -- Every tick, render the background and all entities
     commitLayer $ ffor delta $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
-    commitLayer $ join $ ffor state $ \(State _ ps) -> renderEntities (\a->Guy.render a a) ps
+    commitLayer $ join $ ffor state $ \(State _ _ ps) -> renderEntities render ps
 
     -- Show FPS counter
     commitLayer $ ffor fps $ \a -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) (show a) 0 0
@@ -100,6 +93,7 @@ game setup = do
     let initialState =
           State
           { deltaTime = delta
+          , mouse = mM
           -- , ps = [player, player1, player2, player3, player4, player5, player6, player7, player8, player9, player10, player11, player12, player13]
           , ps = [player]
           }
@@ -110,10 +104,10 @@ game setup = do
   -- Quit on a quit event
   evQuit <- getQuitEvent
   performEvent_ $ ffor evQuit $ \() -> liftIO $ do
-    SDL.quit
     SDL.destroyRenderer $ renderer setup
     SDL.destroyWindow $ window setup
     SDL.Font.quit
+    SDL.quit
     exitSuccess
 
 -- Start the game loop properly
