@@ -84,7 +84,8 @@ game setup = do
 
     -- Every render tick, render the background and all entities
     commitLayer $ ffor renderTick $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
-    commitLayer $ ffor renderTick $ \(State _ _ ps) -> renderEntities (renderGuy (renderer setup)) ps
+    --commitLayer $ ffor renderTick $ \(State _ _ ps) -> renderEntities (renderGuy (renderer setup)) ps
+    commitLayer $ ffor (ffor renderTick $ \(State _ _ ps) -> fmap prepRender ps) (renderGuy (renderer setup))
 
     -- Show FPS counter
     commitLayer $ ffor fps $ \a -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) (show a) 0 0
