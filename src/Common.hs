@@ -131,9 +131,9 @@ updateTime (lim, d) time =
             | otherwise = (ac, False, False)
 
 -- An easy package containing lists for all entities and data
-data GameState t p =
+data GameState t guy =
   State
   { deltaTime :: Dynamic t Time
   , mouse :: Dynamic t SDL.MouseMotionEventData
-  , ps :: [Dynamic t p] 
+  , ps :: [guy] 
   }

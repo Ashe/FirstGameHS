@@ -4,13 +4,13 @@
 
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecursiveDo #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Game
 ( game
 , beginGame
 ) where
 
-import Data.Time.Clock
 import System.Exit (exitSuccess)
 
 import Control.Monad
@@ -31,7 +31,7 @@ import InputModule
 import Guy
 
 -- The main game loop
-game :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => GameSetup -> m () 
+game :: forall r t m. (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m, MonadIO m) => GameSetup -> m () 
 game setup = do
 
   -- When the network is finished setting up
@@ -80,11 +80,11 @@ game setup = do
   rec
 
     -- Set up the players
-    player <- createGuy 0 0 (renderer setup) (deltaTime state) pTex pAnimState
+    player <- createGuy 0 0 (renderer setup) (join (deltaTime <$> state)) pTex pAnimState
 
     -- Every tick, render the background and all entities
     commitLayer $ ffor delta $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
-    commitLayer $ join $ ffor state $ \(State _ _ ps) -> renderEntities render ps
+    -- commitLayer $ join $ ffor state $ \(State _ _ ps) -> renderEntities render ps
 
     -- Show FPS counter
     commitLayer $ ffor fps $ \a -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) (show a) 0 0
@@ -94,7 +94,6 @@ game setup = do
           State
           { deltaTime = delta
           , mouse = mM
-          -- , ps = [player, player1, player2, player3, player4, player5, player6, player7, player8, player9, player10, player11, player12, player13]
           , ps = [player]
           }
 
@@ -104,6 +103,7 @@ game setup = do
   -- Quit on a quit event
   evQuit <- getQuitEvent
   performEvent_ $ ffor evQuit $ \() -> liftIO $ do
+    -- shutdownOn =<< delay 0 evQuit
     SDL.destroyRenderer $ renderer setup
     SDL.destroyWindow $ window setup
     SDL.Font.quit
