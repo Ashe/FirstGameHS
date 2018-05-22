@@ -53,6 +53,7 @@ updatePosition (vel, Time dt _ _ _ _ _) (P pos) = P $ V2 newPosX newPosY
   
 -- Use the render function to produce render a guy on screen
 renderGuy :: (Reflex t, MonadSample t m, MonadIO m) => SDL.Renderer -> Guy t -> m ()
+--renderGuy :: MonadIO m => SDL.Renderer -> Guy t -> m ()
 renderGuy renderer g = do
   anim <- sample $ current $ animation g
   pos <- sample $ current $ position g

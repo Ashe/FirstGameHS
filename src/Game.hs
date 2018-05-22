@@ -47,17 +47,14 @@ game setup = do
 
   -- Count when delta fires and compare at different times to calculate fps
   deltaCount <- count $ updated delta
-  -- deltaCountAlt <- delay 1 $ updated deltaCount
 
   -- Tick every quarterSecond
   secondCount <- getRecurringTimerEventWithEventCode 0 1000
   deltaStore <- foldDyn (\a (b,_)->(a,b)) (0,0) $ tagPromptlyDyn deltaCount secondCount
   fps <- holdDyn 0 $ uncurry (-) <$> updated deltaStore
-  -- fps <- holdDyn 0 $ attachPromptlyDynWith (-) deltaCount deltaCountAlt
 
   -- Print a message every frame tick
   -- performEvent_ $ fmap (const testPrint) (updated delta)
-  
   
   -- Get the mouse location
   let defMouseM = MouseMotionEventData Nothing (Mouse 0) [] (P $ V2 0 0) (V2 0 0)
@@ -82,9 +79,12 @@ game setup = do
     -- Set up the players
     player <- createGuy 0 0 (renderer setup) (join (deltaTime <$> state)) pTex pAnimState
 
-    -- Every tick, render the background and all entities
-    commitLayer $ ffor delta $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
-    -- commitLayer $ join $ ffor state $ \(State _ _ ps) -> renderEntities render ps
+    -- Set up a dynamic that fires every tick containing the entire state
+    renderTick <- holdDyn initialState $ tagPromptlyDyn state (updated delta)
+
+    -- Every render tick, render the background and all entities
+    commitLayer $ ffor renderTick $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
+    commitLayer $ ffor renderTick $ \(State _ _ ps) -> renderEntities (renderGuy (renderer setup)) ps
 
     -- Show FPS counter
     commitLayer $ ffor fps $ \a -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) (show a) 0 0
@@ -98,7 +98,7 @@ game setup = do
           }
 
     -- Create the state dynamic
-    state <- holdDyn initialState never
+    state <- foldDyn const initialState never
 
   -- Quit on a quit event
   evQuit <- getQuitEvent

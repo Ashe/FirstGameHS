@@ -91,8 +91,8 @@ renderBlendedText :: MonadIO m => SDL.Renderer -> SDL.Font.Font ->
 renderBlendedText r fo = renderText r fo (SDL.Font.blended fo)
 
 -- Render multiple entities
-renderEntities :: (Monad m, MonadIO mIO) => (a -> mIO ()) -> [m a] -> m (mIO ())
-renderEntities f l = foldM (\_ g -> f g) () <$> sequence l
+renderEntities :: MonadIO m => (a -> m ()) -> [a] -> m ()
+renderEntities f = foldM (\_ e -> f e) ()
 
 -- Data for containing time values
 data Time =
