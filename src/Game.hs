@@ -76,16 +76,16 @@ game setup = do
   -- Enter the recursive do block, to allow cyclic dependencies
   rec
 
-    -- Set up the players
-    player <- createGuy 0 0 (renderer setup) (join (deltaTime <$> state)) pTex pAnimState
-
     -- Set up a dynamic that fires every tick containing the entire state
     renderTick <- holdDyn initialState $ tagPromptlyDyn state (updated delta)
 
     -- Every render tick, render the background and all entities
     commitLayer $ ffor renderTick $ \_ -> SDL.copy (renderer setup) (texmex setup) Nothing Nothing
-    --commitLayer $ ffor renderTick $ \(State _ _ ps) -> renderEntities (renderGuy (renderer setup)) ps
-    commitLayer $ ffor (ffor renderTick $ \(State _ _ ps) -> fmap prepRender ps) (renderGuy (renderer setup))
+    
+    -- Set up the players
+    player <- createGuy (updated renderTick) 0 0 (renderer setup) (join (deltaTime <$> state)) pTex pAnimState
+
+    -- commitLayer $ ffor (ffor renderTick $ \(State _ _ ps) -> fmap prepRender ps) (renderGuy (renderer setup))
 
     -- Show FPS counter
     commitLayer $ ffor fps $ \a -> renderSolidText (renderer setup) defFont (V4 255 255 255 1) (show a) 0 0

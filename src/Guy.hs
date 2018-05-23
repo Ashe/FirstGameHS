@@ -7,10 +7,7 @@
 
 module Guy 
   ( Guy (..)
-  , RenderReq
   , createGuy
-  , renderGuy
-  , prepRender
   ) where
 
 import Control.Monad.Fix
@@ -35,15 +32,24 @@ data Guy t =
  }
 
 -- Easy way to refer to the requirements for rendering
-type RenderReq = (SDL.Texture, AnimationState, Point V2 Double)
+type RenderReq = (SDL.Texture, Point V2 Double, AnimationState)
 
 -- Creates a guy out of simple data
-createGuy :: (Reflex t, MonadHold t m, MonadFix m) => 
-  Double -> Double -> SDL.Renderer -> Dynamic t Time -> SDL.Texture -> AnimationState -> m (Guy t)
-createGuy x y r time tex anim = do
+createGuy :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => 
+  Event t a -> Double -> Double -> SDL.Renderer -> Dynamic t Time -> SDL.Texture -> AnimationState -> m (Guy t)
+createGuy ev x y r time tex anim = do
+
+  -- Set up dynamics and behaviors for guy
   vel <- hold (V2 0 0) never
   pos <- foldDyn updatePosition (P $ V2 x y) (attach vel $ updated time)
   animDyn <- foldDyn updateAnimationState anim $ updated time
+
+  -- Render the guy
+  let taggedEv = Reflex.tag (current animDyn) ev
+  render <- holdDyn (pure ()) (renderGuy r <$> attachWith (\a b -> (tex, a, b)) (current pos) taggedEv)
+  commitLayer render
+
+  -- Create the guy
   pure Guy
     { position = pos
     , velocity = vel
@@ -58,9 +64,9 @@ updatePosition (vel, Time dt _ _ _ _ _) (P pos) = P $ V2 newPosX newPosY
   
 -- Use the render function to produce render a guy on screen
 renderGuy :: MonadIO m => SDL.Renderer -> RenderReq -> m ()
-renderGuy renderer (t, a, p) = 
+renderGuy renderer (t, p, a) = 
   SDL.copy renderer t (getCurrentFrame a) $ Just $ SDL.Rectangle (truncate <$> p) (V2 100 100)
 
 -- Get all the events required to render the guy
 prepRender :: Reflex t => Guy t -> Event t RenderReq
-prepRender g = attachPromptlyDynWith (\a b->(texture g,a,b)) (animation g) (updated $ position g)
+prepRender g = attachPromptlyDynWith (\a b->(texture g,a,b)) (position g) (updated $ animation g)
