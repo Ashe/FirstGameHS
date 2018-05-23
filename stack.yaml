@@ -40,11 +40,12 @@ packages:
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
 extra-deps:
-- git: git://github.com/reflex-frp/reflex.git
-  commit: 9f3356fecb1620f74b45291b38aaaafbe92458fa
 - prim-uniq-0.1.0.1
+- git: git://github.com/reflex-frp/reflex.git
+  commit: 5d9c8a00f2eb832f109c870963182149b988062a
 - git: git://github.com/schell/reflex-sdl2.git
-  commit: 02ec27d71551875add6cb0e11e43b650cce3f1cb
+  commit: 6dbec88e35d7bb87f80dbc51febb3b219845749e
+
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

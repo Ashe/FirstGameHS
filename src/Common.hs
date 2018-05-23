@@ -42,11 +42,11 @@ import qualified Debug.Trace
 type Layer m = Performable m ()
 
 -- Commit a layer stack that changes over time.
-commitLayers :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => Dynamic t [Layer m] -> m ()
+commitLayers :: (ReflexSDL2 t m, MonadDynamicWriter t [Layer m] m) => Dynamic t [Layer m] -> m ()
 commitLayers = tellDyn
 
 -- Commit one layer that changes over time.
-commitLayer :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => Dynamic t (Layer m) -> m ()
+commitLayer :: (ReflexSDL2 t m, MonadDynamicWriter t [Layer m] m) => Dynamic t (Layer m) -> m ()
 commitLayer = tellDyn . fmap pure
 
 -- Takes file and creates a texture out of it

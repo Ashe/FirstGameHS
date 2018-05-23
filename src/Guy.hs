@@ -33,7 +33,7 @@ data Guy t =
 type RenderReq = (SDL.Texture, Point V2 Double, AnimationState)
 
 -- Creates a guy out of simple data
-createGuy :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) => 
+createGuy :: (ReflexSDL2 t m, MonadDynamicWriter t [Layer m] m) => 
   Dynamic t (GameState t guy) -> Double -> Double -> SDL.Renderer -> SDL.Texture -> AnimationState -> m (Guy t)
 createGuy state x y r tex anim = do
 

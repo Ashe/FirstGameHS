@@ -30,7 +30,7 @@ import InputModule
 import Guy
 
 -- The main game loop
-game :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m, MonadIO m) => GameSetup -> m () 
+game :: (ReflexSDL2 t m, MonadDynamicWriter t [Layer m] m, MonadIO m) => GameSetup -> m () 
 game setup = do
 
   -- When the network is finished setting up
@@ -48,7 +48,7 @@ game setup = do
   deltaCount <- count $ updated delta
 
   -- Tick every quarterSecond
-  secondCount <- getRecurringTimerEventWithEventCode 0 1000
+  secondCount <- tickLossyFromPostBuildTime 1
   deltaStore <- foldDyn (\a (b,_)->(a,b)) (0,0) $ tagPromptlyDyn deltaCount secondCount
   fps <- holdDyn 0 $ uncurry (-) <$> updated deltaStore
 
@@ -100,24 +100,23 @@ game setup = do
 
   -- Quit on a quit event
   evQuit <- getQuitEvent
-  performEvent_ $ ffor evQuit $ \() -> liftIO $ do
-    -- shutdownOn =<< delay 0 evQuit
-    SDL.destroyRenderer $ renderer setup
-    SDL.destroyWindow $ window setup
-    SDL.Font.quit
-    SDL.quit
-    exitSuccess
+  performEvent_ $ liftIO (putStrLn "Exiting game.") <$ evQuit
+  shutdownOn =<< delay 0 evQuit
 
 -- Start the game loop properly
 beginGame :: GameSetup -> IO ()
-beginGame gs =
-  host () $ do
+beginGame gs = do
+  host $ do
     (_, dynLayers) <- runDynamicWriterT $ game gs
     performEvent_ $ ffor (updated dynLayers) $ \layers -> do
       rendererDrawColor r $= V4 0 0 0 255
       clear r
       sequence_ layers
       present r
+  SDL.destroyRenderer r
+  SDL.destroyWindow w
+  SDL.quit
+  exitSuccess
   where w = window gs
         r = renderer gs
 
