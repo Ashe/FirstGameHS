@@ -4,7 +4,6 @@
 
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE RecursiveDo #-}
-{-# LANGUAGE ScopedTypeVariables #-}
 
 module Game
 ( game
@@ -31,7 +30,7 @@ import InputModule
 import Guy
 
 -- The main game loop
-game :: forall r t m. (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m, MonadIO m) => GameSetup -> m () 
+game :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m, MonadIO m) => GameSetup -> m () 
 game setup = do
 
   -- When the network is finished setting up

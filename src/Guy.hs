@@ -2,8 +2,6 @@
 ---------------------------
 
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE RankNTypes #-}
 
 module Guy 
   ( Guy (..)
@@ -40,7 +38,7 @@ createGuy :: (ReflexSDL2 r t m, MonadDynamicWriter t [Layer m] m) =>
 createGuy state x y r tex anim = do
 
   -- Define delta time
-  let time = join (deltaTime <$> state)
+  let time = getTime state
 
   -- Set up dynamics and behaviors for guy
   vel <- hold (V2 0 0) never

@@ -17,9 +17,9 @@ module Common
 , getFontFromFile
 , updateTime
 , createTime
+, getTime
 ) where
 
-import Debug.Trace as Trace
 import Control.Monad
 import Control.Arrow((***))
 import Control.Applicative
@@ -108,6 +108,10 @@ data Time =
 -- Easy way to create a Time
 createTime :: Word32 -> Time
 createTime limit = Time 0 0 0 limit True False
+
+-- Easy way to extract time from a gamestate
+getTime :: Reflex t => Dynamic t (GameState t guy) -> Dynamic t Time
+getTime s = join (deltaTime <$> s)
 
 -- Update the time with the time since previous frame
 updateTime :: (Word32, Word32) -> Time -> Time
