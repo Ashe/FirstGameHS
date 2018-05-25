@@ -31,7 +31,7 @@ data Guy t =
  }
 
 -- Easy way to refer to the requirements for rendering
-type RenderReq = (SDL.Texture, Point V2 Double, AnimationState)
+type RenderReq = (SDL.Texture, Bool, Point V2 Double, AnimationState)
 
 -- Creates a guy out of simple data
 createGuy :: (ReflexSDL2 t m, MonadDynamicWriter t [Layer m] m) => 
@@ -50,7 +50,10 @@ createGuy state x y r tex anim = do
 
     -- Render the guy
     let taggedEv = Reflex.tag (current animDyn) (updated state)
-    render <- holdDyn (pure ()) (renderGuy r <$> attachWith (\a b -> (tex, a, b)) (current pos) taggedEv)
+        posAnim = attach (current pos) taggedEv
+        shouldFlip = (<0) <$> vel
+    render <- holdDyn (pure ()) (renderGuy r <$> attachWith (\a (b,c) -> (tex, a, b, c)) shouldFlip posAnim)
+    -- render <- holdDyn (pure ()) (renderGuy r <$> attachWith (\a b -> (tex, a, b)) (current pos) taggedEv)
     commitLayer render
 
   -- Create the guy
@@ -67,9 +70,11 @@ updatePosition (vel, Time dt _ _ _ _ _) (P pos) = P $ V2 newPosX newPosY
   
 -- Use the render function to produce render a guy on screen
 renderGuy :: MonadIO m => SDL.Renderer -> RenderReq -> m ()
-renderGuy renderer (t, P (V2 x y), a) = 
-  SDL.copy renderer t (getCurrentFrame a) $ Just $ SDL.Rectangle (truncate <$> p) (V2 100 100)
-    where p = P $ V2 (x - 50) (y - 50)
+renderGuy renderer (t, flip, P (V2 x y), a) = 
+  SDL.copyEx renderer t (getCurrentFrame a) endPos 0 Nothing (V2 flip False)
+    where endPos = Just $ SDL.Rectangle (truncate <$> p) (V2 100 100)
+          p = P $ V2 (x - 50) (y - 50)
+
 
 -- Every frame, calculate velocity based on direction between guy and mouse
 calculateVelocity :: (Point V2 Double, SDL.MouseMotionEventData) -> V2 Double
