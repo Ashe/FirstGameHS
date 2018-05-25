@@ -17,7 +17,7 @@ module Common
 , getFontFromFile
 , updateTime
 , createTime
-, getTime
+, getDyn
 ) where
 
 import Control.Monad
@@ -48,6 +48,10 @@ commitLayers = tellDyn
 -- Commit one layer that changes over time.
 commitLayer :: (ReflexSDL2 t m, MonadDynamicWriter t [Layer m] m) => Dynamic t (Layer m) -> m ()
 commitLayer = tellDyn . fmap pure
+
+-- Easy way to extract time from a gamestate
+getDyn :: Reflex t => (a -> Dynamic t b) -> Dynamic t a -> Dynamic t b
+getDyn f s = join (f <$> s)
 
 -- Takes file and creates a texture out of it
 getTextureFromImg :: MonadIO m => SDL.Renderer -> FilePath -> m SDL.Texture
@@ -108,10 +112,6 @@ data Time =
 -- Easy way to create a Time
 createTime :: Word32 -> Time
 createTime limit = Time 0 0 0 limit True False
-
--- Easy way to extract time from a gamestate
-getTime :: Reflex t => Dynamic t (GameState t guy) -> Dynamic t Time
-getTime s = join (deltaTime <$> s)
 
 -- Update the time with the time since previous frame
 updateTime :: (Word32, Word32) -> Time -> Time

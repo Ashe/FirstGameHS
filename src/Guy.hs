@@ -2,6 +2,7 @@
 ---------------------------
 
 {-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RecursiveDo #-}
 
 module Guy 
   ( Guy (..)
@@ -38,17 +39,19 @@ createGuy :: (ReflexSDL2 t m, MonadDynamicWriter t [Layer m] m) =>
 createGuy state x y r tex anim = do
 
   -- Define delta time
-  let time = getTime state
+  let time = getDyn deltaTime state
+      mM = getDyn mouse state
 
-  -- Set up dynamics and behaviors for guy
-  vel <- hold (V2 0 0) never
-  pos <- foldDyn updatePosition (P $ V2 x y) (attach vel $ updated time)
-  animDyn <- foldDyn updateAnimationState anim $ updated time
+  rec
+    -- Set up dynamics and behaviors for guy
+    vel <- hold (V2 0 0) (calculateVelocity <$> attach (current pos) (updated mM))
+    pos <- foldDyn updatePosition (P $ V2 x y) (attach vel $ updated time)
+    animDyn <- foldDyn updateAnimationState anim $ updated time
 
-  -- Render the guy
-  let taggedEv = Reflex.tag (current animDyn) (updated state)
-  render <- holdDyn (pure ()) (renderGuy r <$> attachWith (\a b -> (tex, a, b)) (current pos) taggedEv)
-  commitLayer render
+    -- Render the guy
+    let taggedEv = Reflex.tag (current animDyn) (updated state)
+    render <- holdDyn (pure ()) (renderGuy r <$> attachWith (\a b -> (tex, a, b)) (current pos) taggedEv)
+    commitLayer render
 
   -- Create the guy
   pure Guy
@@ -64,5 +67,12 @@ updatePosition (vel, Time dt _ _ _ _ _) (P pos) = P $ V2 newPosX newPosY
   
 -- Use the render function to produce render a guy on screen
 renderGuy :: MonadIO m => SDL.Renderer -> RenderReq -> m ()
-renderGuy renderer (t, p, a) = 
+renderGuy renderer (t, P (V2 x y), a) = 
   SDL.copy renderer t (getCurrentFrame a) $ Just $ SDL.Rectangle (truncate <$> p) (V2 100 100)
+    where p = P $ V2 (x - 50) (y - 50)
+
+-- Every frame, calculate velocity based on direction between guy and mouse
+calculateVelocity :: (Point V2 Double, SDL.MouseMotionEventData) -> V2 Double
+calculateVelocity (P pos, SDL.MouseMotionEventData _ _ _ mousePos _) = vel - pos
+  where (P (V2 m1 m2)) = mousePos
+        vel = V2 (fromIntegral m1) (fromIntegral m2)
