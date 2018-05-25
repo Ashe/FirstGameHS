@@ -53,7 +53,6 @@ createGuy state x y r tex anim = do
         posAnim = attach (current pos) taggedEv
         shouldFlip = (<0) <$> vel
     render <- holdDyn (pure ()) (renderGuy r <$> attachWith (\a (b,c) -> (tex, a, b, c)) shouldFlip posAnim)
-    -- render <- holdDyn (pure ()) (renderGuy r <$> attachWith (\a b -> (tex, a, b)) (current pos) taggedEv)
     commitLayer render
 
   -- Create the guy
@@ -74,7 +73,6 @@ renderGuy renderer (t, flip, P (V2 x y), a) =
   SDL.copyEx renderer t (getCurrentFrame a) endPos 0 Nothing (V2 flip False)
     where endPos = Just $ SDL.Rectangle (truncate <$> p) (V2 100 100)
           p = P $ V2 (x - 50) (y - 50)
-
 
 -- Every frame, calculate velocity based on direction between guy and mouse
 calculateVelocity :: (Point V2 Double, SDL.MouseMotionEventData) -> V2 Double
